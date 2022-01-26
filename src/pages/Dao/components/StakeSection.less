@@ -1,0 +1,391 @@
+.stakeSection {
+  width: 49%;
+  background-color: #29292C;
+  color: #b5b6b6;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  .stakeContentWrapper {
+    padding: 1.5rem 1.5rem 0rem 1.5rem;
+    // border-bottom: 1px solid #434343;
+  }
+
+  @media (max-width: 768px) {
+    .stakeContentWrapper {
+      padding: 1.5rem;
+      // border-bottom: 1px solid #434343;
+    }
+  }
+
+  .rewardContentWrapper {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+
+    .rewardRow {
+      display: flex;
+
+      .rewardRowTitle {
+        flex: 1;
+        font-size: 1.25rem;
+      }
+      .cryptoSelectionContainer {
+        flex: 2;
+
+        .tokenSelectionContainer {
+          display: flex;
+          flex-direction: column;
+
+          .tokenSelection {
+            flex: 1;
+            display: flex;
+            background-color: #1B1B1C;
+            margin-bottom: 1rem;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border-radius: 9999px;
+            border: 1px solid #40444f99;
+
+            &:hover {
+              border: 1px solid #40444fff;
+            }
+
+            .tokenDropdown {
+              display: flex;
+              align-items: center;
+              padding: 0.4rem 0 0.4rem 1rem;
+              flex: 1;
+
+              .tokenImgContainer {
+                width: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                .tokenImg {
+                  height: 24px;
+                }
+              }
+
+              .tokenSymbol {
+                margin-left: 1rem;
+              }
+            }
+
+            .tokenDropdown:hover {
+              cursor: pointer;
+            }
+
+            .tokenPercentage {
+              position: relative;
+              width: 4.75rem;
+
+              .tokenPercentageInput {
+                width: 100%;
+                background-color: transparent;
+                border: none;
+                border-radius: 9999px;
+                padding: 0.4rem 2rem 0.4rem 0;
+                font-size: 1rem;
+                text-align: right;
+              }
+
+              .tokenPercentageInput:focus {
+                outline: none;
+                box-shadow: 0 0 0 0.5px #eb5c20;
+                transition: .1s;
+                color: #eb5c20;
+              }
+            }
+
+            .suffix {
+              font-size: 0.5rem;
+              position: absolute;
+              right: 1rem;
+              top: 0.4rem;
+             }
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .rewardContentWrapper {
+      padding: 1.5rem;
+    }
+  }
+}
+
+.stakeUpperSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.amountRow {
+  display: flex;
+  margin-bottom: 1.5rem;
+  position: relative;
+  align-items: center;
+
+  .amountRowTitle {
+    flex: 1;
+    font-size: 1.25rem;
+
+    text-align: left;
+  }
+
+  .amountRowInputContainer {
+    flex: 4;
+
+    input {
+      width: 100%;
+      background-color: #1B1B1C;
+      border: none;
+      box-shadow: 0 0 0 0.5px #1B1B1C;
+      border-radius: 9999px;
+      font-size: 1.5rem;
+      padding: 0 1rem;
+      -moz-appearance: textfield;
+      margin: 1px 0 0.25rem 0;
+    }
+
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 0.5px #eb5c20;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  .suffix {
+    font-weight:bold;
+    font-size: 1rem;
+    position: absolute;
+    right: 1.25rem;
+    top: 0.45rem;
+  }
+}
+
+.balanceRow {
+  display: flex;
+  margin-bottom: 1.5rem;
+
+  .balanceRowTitleContainer {
+    flex: 1;
+
+
+    .balanceRowTitle {
+      text-align: left;
+      padding-right: 1.5rem;
+    }
+  }
+
+  .sliderContainer {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    position: relative;
+
+    .balancePercentageSuffix {
+      position: absolute;
+      right: 0;
+    }
+
+    .balancePercentage {
+      margin-left: 0.5rem;
+
+      .balancePercentageInput {
+        background: transparent;
+        border: none;
+        width: 2.75rem;
+        padding-right: 1rem;
+        text-align: right;
+        border-radius: 4px;
+      }
+
+      .balancePercentageInput:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.5px #eb5c20;
+        transition: .1s;
+      }
+    }
+
+    .sliderContentWrapper {
+      width: 100%;
+      display: flex;
+      align-items: center;
+
+      .sliderWrapper {
+        flex: 1;
+        display: flex;
+        margin-left: 1.5rem;
+        align-items: center;
+      }
+
+      .slider {
+        width: 100%;
+        padding: 0;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 3px; /* Specified height */
+        background: black; /* Grey background */
+        outline: none; /* Remove outline */
+        opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+        -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
+        transition: opacity 0.2s;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Override default look */
+        appearance: none;
+        width: 15px; /* Set a specific slider handle width */
+        height: 15px; /* Slider handle height */
+        border-radius: 50%;
+        background-color: #C4C4C4; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+        transition: .2s;
+      }
+
+      .slider::-webkit-slider-thumb:hover {
+        background-color: #eb5c20;
+        width: 17.5px;
+        height: 17.5px;
+      }
+
+      .slider::-webkit-slider-thumb:active {
+        background-color: #eb5c20;
+        width: 17.5px;
+        height: 17.5px;
+      }
+
+      .slider::-moz-range-thumb {
+        width: 15px; /* Set a specific slider handle width */
+        height: 15px; /* Slider handle height */
+        background-color: #C4C4C4; /* Green background */
+        cursor: pointer; /* Cursor on hover */
+      }
+    }
+  }
+}
+
+.lockTimeRow {
+  display: flex;
+
+  .lockTimeRowTitleContainer {
+    flex: 1;
+
+
+    .lockTimeRowTitle {
+      text-align: left;
+      padding-right: 1.5rem;
+    }
+  }
+
+
+  .dateSelectionContainer {
+    flex: 4;
+    display: flex;
+    flex-direction: column;
+
+    .datePickerContainer {
+      margin-bottom: 0.75rem;
+    }
+
+    .presetDurationContainer {
+      width: 100%;
+
+      .presetDurationSelection {
+        width: 100%;
+        display: flex;
+      }
+    }
+  }
+}
+
+.datePickerInput {
+  color: #b5b6b6;
+  background-color: #1B1B1C;
+  border: 0 solid #40444f99;
+  border-radius: 0.3rem;
+  font-size: 1rem;
+  padding: 0.25rem 1.5rem;
+  box-shadow: 0 0 0 0.5px transparent;
+  margin-bottom: 0.5rem;
+}
+
+.datePickerInput:hover {
+  box-shadow: 0 0 0 0.5px #eb5c20;
+  transition: .1s;
+  cursor: pointer;
+}
+
+.stakeSubmitButton {
+  margin-top: 32px;
+  width: 100%;
+  background-color: #4c4c4d;
+  border: none;
+  border-radius: 15px;
+  font-size: 1rem;
+  padding: 0.5rem 1.5rem;
+}
+
+.stakeSubmitButton:hover {
+  background-color: #5f5f5f;
+  cursor: pointer;
+}
+
+.modal {
+  :global {
+    .ant-modal-content {
+      border-radius: 20px;
+      background: transparent;
+    }
+  }
+
+  .modalListItem {
+    border-radius: 0.3rem;
+    display: flex;
+    margin-bottom: 1rem;
+    padding: 0.25rem 0.5rem;
+
+    .modalListLogoContainer {
+      .modalListLogo {
+        width: 32px;
+      }
+    }
+
+    .modalListSymbol {
+      margin-left: 1.5rem;
+    }
+  }
+
+  .modalListItem:hover {
+    background-color: #5f5f5f;
+    cursor: pointer;
+  }
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 52px;
+  color: #b5b6b6;
+}
+.search {
+  margin-top: 12px;
+}
+.coinList {
+  width: 100%;
+  padding: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .stakeSection {
+    width: 90%;
+  }
+}

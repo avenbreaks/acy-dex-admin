@@ -1,0 +1,98 @@
+.pool {
+  display: flex;
+  .bigtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    &:hover {
+      color: #eb5c20;
+    }
+  }
+  .value {
+    font-size: 14px;
+    font-weight: 400;
+    color: #b5b6b6;
+    &:hover {
+      color: #eb5c20;
+    }
+  }
+}
+
+#liquidityPositionTable > tr,
+td,
+th {
+  text-align: left !important;
+}
+
+#expandedRowTable > tr, td, th {
+  // text-align: center !important;
+}
+.whiteTextExpandableRow > td > p {
+  color: white;
+}
+
+.removeLiquidityButton {
+  width: 72px;
+  // background-color: #eb5c20;
+  color: white;
+  // opacity: 0.8;
+  border-radius: 30px;
+  border-width: 0px;
+  // padding: 0.25rem 0.5rem;
+  // font-size: 1.5rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  &:hover {
+    // background-color: #eb7a20;
+    opacity: 0.3;
+  }
+}
+
+.noBg {
+  background: none !important;
+}
+
+@media (max-width: 768px) {
+  .pool {
+    .bigtitle {
+      font-size: 14px;
+    }
+    .value {
+      font-size: 10px;
+    }
+  }
+}
+
+.leftAlign {
+  text-align: left !important;
+}
+
+.tableSeeMoreWrapper {
+  text-align: center;
+  width: 100%;
+}
+.tableSeeMore {
+  font-size: 16px;
+}
+
+.rowHighlighted {
+  background: #373739!important;
+}
+.rowExpanded {
+  background: #29292c!important;
+  &:hover .ant-table-tbody > tr.ant-table-row-level-1:hover > td {
+    background: unset;
+  }
+  td {
+    border: 0!important;
+  }
+}
+.rowNormal {
+  background: transparent!important;
+}
+
+.hoverToWhite:hover {
+  color: white;
+}

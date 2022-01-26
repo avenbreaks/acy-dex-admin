@@ -1,0 +1,134 @@
+@cardColor: #2f313583;
+@buttonColor: #4c4c4d;
+@ACYOrange: #eb5c20;
+// Chart on main page
+.stakeSectionMain {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding: 0 20px 20px 20px;
+  align-items: stretch;
+}
+
+.toggleChart {
+  display: flex;
+  justify-content: end;
+
+  div {
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  div:hover {
+    color: @ACYOrange;
+  }
+}
+
+.chartSection {
+  width: 49%;
+  background-color: #29292C;
+  border-radius: 15px;
+  margin: 0px 15px 0px 0px;
+  padding: 55px 15px 0px 15px;
+  overflow: hidden;
+  height: 315px;
+  position: relative;
+
+  .switchChartsSelector{
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .graphStats {
+    padding: 0;
+    margin-bottom: 5px;
+  }
+  .statName {
+    font-size: 13pt;
+    line-height: 14pt;
+    color: #b5b6b6;
+  }
+  .statValue {
+    font-size: 24pt;
+    line-height: 25pt;
+    font-weight: bold;
+  }
+  .chartWrapper {
+    height: 100%;
+  }
+}
+
+.createProposalContainer {
+  text-align: end;
+  padding: 0 20px 1rem 0;
+
+  .createProposalButton {
+    background-color: #4c4c4d;
+    color: white;
+    border: none;
+    border-radius: 7.5px;
+    font-size: 1.25rem;
+    padding: 0.25rem 2.5rem;
+  }
+
+  .createProposalButton:hover {
+    cursor: pointer;
+    background-color: #5f5f5f;
+  }
+}
+
+.chartContainer {
+  margin-top: 3rem;
+  padding-top: 5rem;
+  position: relative;
+}
+
+.contentChartsSelector{
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+@media (max-width: 768px) {
+  .contentChartsSelector {
+    right: 50%;
+    transform: translate(50%, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .stakeSectionMain {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chartSection {
+    width: 90%;
+    height: 400px;
+  }
+  .createProposalButton {
+    background-color: #eb5c20;
+    color: white;
+    border: none;
+    border-radius: 7.5px;
+    font-size: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    margin-right: 30px;
+  }
+
+  .chartSection {
+    margin: 0 0 2.5rem 0;
+  }
+
+  .chartContainer {
+    padding: 5rem 2rem 0 2rem;
+  }
+}
+
+.tableChartContainer {
+  padding: 0 20px;
+}

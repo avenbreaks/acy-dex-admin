@@ -1,0 +1,307 @@
+@import '~antd/lib/style/themes/default.less';
+
+@pro-header-hover-bg: rgba(0, 0, 0, 0.025);
+
+.header {
+  height: @layout-header-height;
+  padding: 0;
+  position: relative;
+}
+
+.logo {
+  height: @layout-header-height;
+  line-height: @layout-header-height;
+  vertical-align: top;
+  display: inline-block;
+  padding: 0 0 0 24px;
+  cursor: pointer;
+  font-size: 20px;
+  img {
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+.menu {
+  :global(.anticon) {
+    margin-right: 8px;
+  }
+  :global(.ant-dropdown-menu-item) {
+    min-width: 160px;
+  }
+}
+
+.trigger {
+  font-size: 20px;
+  height: @layout-header-height;
+  cursor: pointer;
+  color: @primary-color;
+  transition: all 0.3s, padding 0s;
+  padding: ~'calc((@{layout-header-height} - 33px) / 2)' 24px;
+}
+
+.right {
+  float: right;
+  height: 100%;
+  overflow: hidden;
+  .action {
+    cursor: pointer;
+    padding: 0 12px;
+    display: inline-block;
+    transition: all 0.3s;
+    height: 100%;
+    > i {
+      vertical-align: middle;
+      color: @text-color;
+    }
+    &:hover {
+      background: @pro-header-hover-bg;
+    }
+    &:global(.opened) {
+      background: @pro-header-hover-bg;
+    }
+  }
+  .search {
+    padding: 0 12px;
+    &:hover {
+      background: transparent;
+    }
+  }
+  .account {
+    .avatar {
+      margin: ~'calc((@{layout-header-height} - 24px) / 2)' 0;
+      margin-right: 8px;
+      color: @primary-color;
+      background: rgba(255, 255, 255, 0.85);
+      vertical-align: top;
+    }
+  }
+}
+
+.dark {
+  height: @layout-header-height;
+  .action {
+    color: rgba(255, 255, 255, 0.85);
+    > i {
+      color: rgba(255, 255, 255, 0.85);
+    }
+    &:hover,
+    &:global(.opened) {
+      background: @primary-color;
+    }
+    :global(.ant-badge) {
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+}
+.walltitle {
+  font-size: 18px;
+  //font-weight: bold;
+  color: #b5b5b6;
+  display: flex;
+  align-items: center;
+}
+.showmore {
+  text-align: center;
+  cursor: pointer;
+  color: #929298;
+  &:hover {
+    color: #b5b5b6;
+  }
+}
+.metamasktitle {
+  color: #ed6c36;
+  font-weight: bold;
+  font-size: 30px;
+  padding-left: 50px;
+  display: flex;
+  justify-content: space-between;
+}
+.coin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 30px;
+  font-weight: bold;
+  color: #b5b5b6;
+  .coinname {
+  }
+  .coinprice {
+    .dollar {
+      font-size: 24px;
+      font-weight: 400;
+      color: #b5b6b6;
+    }
+  }
+}
+.buyCrypto {
+  padding: 15px 50px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #b5b6b6;
+}
+.transak {
+  width: 50%;
+  display: flex;
+  margin: 0 50px;
+  padding: 15px 15px;
+  border: 2px solid #ed6c36;
+  border-radius: 20px;
+  font-size: 30px;
+  font-weight: 600;
+  color: #b5b6b6;
+}
+.clear {
+  margin: 32px 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 20px;
+  font-weight: 400;
+  color: #b5b6b6;
+  .subtitle {
+    font-size: 18px;
+  }
+}
+
+.recentTransaction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.setting {
+  width: 300px;
+  padding: 10px;
+  background: #2a2a2d;
+  border: 1px solid #707070;
+  border-radius: 10px 3px 10px 10px;
+  font-size: 14px;
+  color: #b5b6b6;
+  .list {
+    .listitem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .setitem{
+      padding: 12px 20px;
+      color: rgb(133, 133, 141);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 22px;
+      display: flex;
+      align-items: center;
+      svg{
+        margin-right: 12px;
+    font-size: 18px;
+      }
+      &:hover{
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgb(133, 133, 141);
+        text-decoration: none;
+      }
+    }
+  }
+  .message {
+    margin-top: 22px;
+    padding: 22px 13px;
+    background: #373739;
+    border-radius: 10px;
+  }
+}
+
+.descLine{
+  display:flex;
+  justify-content: space-between;
+}
+
+@media only screen and (max-width: @screen-md) {
+  .header {
+    :global(.ant-divider-vertical) {
+      vertical-align: unset;
+    }
+    .name {
+      display: none;
+    }
+    i.trigger {
+      padding: 22px 12px;
+    }
+    .logo {
+      padding-left: 12px;
+      padding-right: 12px;
+      position: relative;
+    }
+    .right {
+      position: absolute;
+      right: 12px;
+      top: 0;
+      .account {
+        .avatar {
+          margin-right: 0;
+        }
+      }
+    }
+  }
+}
+
+// 网络切换部分css
+.networkListBlock{
+  background: #1b1b1b;
+  //width: 50%;
+  width: 180px;
+  border-radius: 10px;
+  padding: 10px
+}
+.networkListLayout{
+    width: 90%;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    margin: 2px auto;
+    margin-bottom: 8px;
+    margin-top: -5px;
+    font-size: 14px;
+    padding: 1px;
+    border:1px solid black;
+    background: black;
+    border-radius: 5px;
+    font-weight: bold;
+    &:hover{
+      border:1px solid #e29227;
+      border-radius: 5px;
+      transform: all 0.2;
+      cursor: pointer;
+    }
+  }
+  .networkButton{
+    background: #2A2E34;
+    color: #EB5C20;
+    display: inline-block;
+    padding:0 5px;
+    border: 2px solid #A34520;
+    border-radius: 20px;
+    line-height: 30px;
+    margin-top: -4px;
+    vertical-align: middle;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  .networkTitle {
+    font-size: 15px;
+    //font-weight: bold;
+    color: #b5b5b6;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-left: 1px;
+    margin-top: -5px;
+    margin-bottom: 2px;
+  }
+  .fontBold{
+    font-weight:bold;
+  }

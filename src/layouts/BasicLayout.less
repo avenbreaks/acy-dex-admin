@@ -1,0 +1,62 @@
+@import '~antd/lib/style/themes/default.less';
+
+.content {
+  margin-top:@layout-header-height;
+  padding-top: @layout-header-height;
+  height:calc(100vh - 64px);
+  overflow-y: auto;
+  overflow-x: auto;
+}
+.bc{
+  background: linear-gradient(top right, #1B1B1C, #d4fc79);
+}
+.radialBg{
+  background-color: #1b1b1c;
+  // radial-gradient(50% 50% at top 20% right 20%, #ea5c1f, #1B1B1C)
+
+  background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(234,92,31,0.15), rgba(27,27,28,0.15)),
+                    radial-gradient(30% 30% at bottom 10% left 5%, rgba(234,92,31,0.05), rgba(27,27,28,0.15)),
+                    radial-gradient(30% 30% at bottom 10% right 5%, rgba(7,9,15,0.30), rgba(27,27,28,0.15));
+  // background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(234,92,31,0.15), rgba(27,27,28,0.15));
+
+}
+
+.marketRadialBg{
+  background-color: #1b1b1c;
+  // radial-gradient(50% 50% at top 20% right 20%, #ea5c1f, #1B1B1C)
+
+  background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(226, 145, 39, 0.15), rgba(27,27,28,0.15)),
+                    radial-gradient(30% 30% at bottom 10% left 5%, rgba(226, 145, 39, 0.05), rgba(27,27,28,0.15)),
+                    radial-gradient(30% 30% at bottom 10% right 5%, rgba(7, 9, 15, 0.30), rgba(27,27,28,0.15));
+}
+
+.marketHeader{
+  background-color: #1b1b1c !important;
+}
+
+
+.daoRadialBg{
+  background-color: #1b1b1c;
+  // background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(234,92,31,0.15), rgba(27,27,28,0.15));
+  background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(198, 34, 78, 0.15), rgba(27,27,28,0.15)),
+  radial-gradient(30% 30% at bottom 10% left 5%, rgba(198, 34, 78, 0.05), rgba(27,27,28,0.15)),
+  radial-gradient(30% 30% at bottom 10% right 5%, rgba(7, 9, 15, 0.30), rgba(27,27,28,0.15));
+}
+
+.liquidityRadialBg{
+  background-color: #1b1b1c;
+  background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(28, 153, 101, 0.15), rgba(27,27,28,0.15)),
+  radial-gradient(30% 30% at bottom 10% left 5%, rgba(28, 153, 101, 0.05), rgba(27,27,28,0.15)),
+  radial-gradient(30% 30% at bottom 10% right 5%, rgba(7, 9, 15, 0.30), rgba(27,27,28,0.15));
+}
+
+.farmsRadialBg {
+  background-color: #1b1b1c;
+  background-image: radial-gradient(50% 50% at top 20% right 20%, rgba(29, 94, 145, 0.25), rgba(27,27,28,0.15)),
+  radial-gradient(30% 30% at bottom 10% left 5%, rgba(28, 153, 101, 0.05), rgba(27,27,28,0.15)),
+  radial-gradient(30% 30% at bottom 10% right 5%, rgba(7, 9, 15, 0.30), rgba(27,27,28,0.15));
+}
+
+.launchpadRadialBg {
+  background-color: #0e0304;
+}

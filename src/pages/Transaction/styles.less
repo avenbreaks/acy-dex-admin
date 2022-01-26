@@ -1,0 +1,102 @@
+.transaction{
+  @defaultcolor: #b5b5b6;
+  margin-bottom: 50px;
+
+  h1{
+   color: #ffffff;
+   font-size: 18px;
+   font-weight:bold;
+   margin-bottom: 20px;
+   margin-top: 30px;
+   border-bottom: 1px solid #29292C;
+   display: flex;
+   align-items: center;
+    &:hover{
+      color: #eb5c20;
+      transform: translate(10px,0);
+      transition-duration: 0.5s;
+    }
+  }
+  .routers{
+    display: flex;
+    font-size: 16px;
+    overflow:auto;
+    max-height:370px;
+    width:100%;
+    margin-bottom: 30px;
+    img{
+      width: 22px;
+      margin-bottom: 0.3rem;
+      margin-left: 0.5rem;
+    }
+    .block{
+      width: 300px;
+      height: 50px;
+      text-align: left;
+      border: 2px solid #757579;
+      padding: 10px 20px;
+      font-weight:bold;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      color: #ffffff;
+      &:hover{
+        background-color: rgba(234,92,31,0.1)
+      }
+    }
+    .smallblock{
+      width: 300px;
+      height: 50px;
+      border: 1px solid #757579;
+      margin:10px auto;
+      display: flex;
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: #ffffff;
+      justify-content: space-between;
+      &:hover{
+        background-color: rgba(234,92,31,0.1)
+      }
+    }
+  }
+  .arrow{
+    padding: 8.5px 20px;
+    &:hover{
+      color: #eb5c20;
+      transform: translate(5px,0);
+      transition-duration: 0.5s;
+    }
+  }
+  table{
+    color: #ffffff;
+    font-size: 16px;
+    border-collapse: separate;
+    border-spacing: 10px 5px;
+
+    td{
+      text-align: right !important;
+
+      img{
+        width: 22px;
+        margin-bottom: 0.3rem;
+        margin-left: 0.5rem;
+      }
+    }
+    
+    .tableFirstCol {
+      text-align: left !important;
+      color: #ffffff;
+      width: 200px;
+    }
+    .tableSeeMore {
+      text-align: left !important;
+      color: #ffffff;
+      width : 200px;
+      &:hover{
+        color: #eb5c20;
+        transform: translate(10px,0);
+        transition-duration: 0.5s;
+        cursor : pointer;
+      }
+    }
+  }
+}
