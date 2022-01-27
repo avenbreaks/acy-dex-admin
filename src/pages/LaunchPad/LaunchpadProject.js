@@ -53,7 +53,7 @@ const LaunchpadProject = () => {
   // STATES
   const { account, chainId, library, activate, active } = useWeb3React();
   const { projectId } = useParams();
-  const [receivedData, setReceivedData] = useState({});
+  const [receivedData, setReceivedData] = useState();
   const [mainCoinLogoURI, setMainCoinLogoURI] = useState(null);
   const [poolID, setPoolID] = useState(null);
   const [poolBaseData, setPoolBaseData] = useState(null);
@@ -69,16 +69,13 @@ const LaunchpadProject = () => {
   const [hasCollected, setHasCollected] = useState(false);
   const [successCollect, setSuccessCollect] = useState(false);
   const [notVesting, setNotVesting] = useState(false);
-  const [isVesting, setIsVesting] = useState(false);
   const [isNotInvesting, setIsNotInvesting] = useState(false);
   const [compareAlloDate, setCompareAlloDate] = useState(false);
   const [comparesaleDate, setComparesaleDate] = useState(false);
   const [comparevestDate, setComparevestDate] = useState(false);
   const [isClickedVesting, setIsClickedVesting] = useState(false);
-  const [isClickedMax, setIsClickedMax] = useState(false);
-  // const [investorNum,setinvestorNum] = useState(0);
-  // const [isInvesting, setIsInvesting] = useState(false);
-
+  const [resVestingDate, setResVestingDate] = useState([])
+  const [resVestingPercent, setResVestingPercent] = useState([])
   // CONSTANTS
   const InputGroup = Input.Group;
   const logoObj = {
@@ -164,7 +161,6 @@ const LaunchpadProject = () => {
 
     // 判断当前是否是vesting阶段
     const curPoolStatus = Number(BigNumber.from(status).toBigInt())
-    if(curPoolStatus === 4) setIsVesting(true)
 
     // set数据
     setPoolBaseData(pool)
@@ -187,7 +183,6 @@ const LaunchpadProject = () => {
       .then(res => {
         if (res) {
           // extract data from string
-          console.log("fecthing project info ------------111",res.contextData)
           const contextData = JSON.parse(res.contextData);
 
           res['tokenLabels'] = contextData['tokenLabels'];
@@ -202,6 +197,9 @@ const LaunchpadProject = () => {
           res['saleStart'] = formatTime(res.scheduleInfo.saleStart);
           res['saleEnd'] = formatTime(res.scheduleInfo.saleEnd);
 
+          res['tsSaleStart'] = BigInt(Date.parse(res['saleStart']) / 1000)
+          res['tsSaleEnd'] = BigInt(Date.parse(res['saleEnd']) / 1000)
+
           res['tokenPrice'] = res.saleInfo.tokenPrice
           res['totalSale'] = res.saleInfo.totalSale;
           res['totalRaise'] = res.saleInfo.totalRaise;
@@ -209,6 +207,9 @@ const LaunchpadProject = () => {
           res['projectName'] = res.basicInfo.projectName;
           res['projectToken'] = res.basicInfo.projectToken;
           res['mainCoin'] = res.basicInfo.mainCoin
+
+          setResVestingDate(res.scheduleInfo.distributionData[1])
+          setResVestingPercent(res.scheduleInfo.distributionData[2])
                
           // get state to hide graph and table
           const curT = new Date()
@@ -217,6 +218,8 @@ const LaunchpadProject = () => {
           setMainCoinLogoURI(mainCoinInfo.logoURI);
           setPoolID(res.basicInfo.poolID);
           setReceivedData(res);
+          console.log("RESULTTTTTTTTTT")
+          console.log(receivedData)
         } else {
           console.log('redirect to list page');
           history.push('/launchpad');
@@ -244,42 +247,11 @@ const LaunchpadProject = () => {
       const provider = new JsonRpcProvider(LAUNCH_RPC_URL(), CHAINID());  // different RPC for mainnet
       const accnt = "0x0000000000000000000000000000000000000000";
       // await getPoolData(provider, accnt)
-    } 
+    }
   }, [library, account, poolID])
 
-  // fetching allocation data
-  useEffect(async () => {
-    console.log("line 145", account, receivedData.projectToken);
-    if (!account) {
-      connectWallet()
-      return;
-    }
-  
-    // get allocation status from backend at begining
-    getAllocationInfo(API_URL(), account, receivedData.projectToken)
-      .then(res => {
-        if (res) {
-          setAllocationInfo(res);
-          console.log('allocation info', res);
-        }
-      })
-      .catch(e => {
-        console.log('Error: ', e);
-        throw e;
-      });
-  }, [account, library]);
 
   // COMPONENTS
-  const TokenBanner = ({ posterUrl }) => {
-    return (
-      <img
-        className="tokenBanner"
-        src={posterUrl}
-        alt=""
-      />
-    );
-  };
-
   const TokenLogoLabel = ({ projectName, tokenLogo}) => {
     return (
       <div className="flexContainer">
@@ -447,125 +419,6 @@ const LaunchpadProject = () => {
             1 {projectToken} = {tokenPrice} {receivedData.mainCoin}
           </div>
         </div>
-      </div>
-    );
-  };
-
-  const ProjectDescription = () => {
-    return (
-      <div className="circleBorderCard cardContent">
-        <div style={{ display: 'block' }}>
-          <div className='projecttitle-socials-container'>
-            <h3 className='projecttitle'>Project Description</h3>
-          </div>
-          
-          <span className="lineSeperator" />
-          <div className="projectDescription">
-            <div className='socialmedia-container'>
-              {
-                receivedData.social && receivedData.social[0] &&
-                <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                  <a href={receivedData.social[0].Website} target="_blank" rel="noreferrer" style={{width:'30%', marginRight:'1rem', alignSelf:'center'}}>{receivedData.social[0].Website}</a>
-                  <div id='social container' className='social-container'>
-                    { Object.entries(receivedData.social[0]).map((item)=>{
-                      if(item[1] !== null){
-                        if(item[0] === "Website" || item[0] === "Polyaddress" || item[0] === "Etheraddress" || item[0] === "Confluxaddress") return null
-                          return (
-                            <SocialMedia url={logoObj[item[0]]} link={item[1]} socialText={item[0]} />
-                          )
-                      }
-                    })}
-                  </div>
-                </div>
-              }
-            </div>
-            <div style={{padding:'2.5em 0 0 0'}}>
-              {receivedData.projectDescription && <p>{receivedData.projectDescription[0]}</p>}
-              {receivedData.projectDescription &&
-                receivedData.projectDescription
-                  .slice(1)
-                  .map(desc => <p style={{ paddingTop: '2rem' }}>{desc}</p>)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  const ChartCard = () => {
-    const [chartData, setChartData] = useState([]);
-    const [transferData, setTransferData] = useState([]);
-
-    const recordNum = 100;
-    const transferTableHeader = [
-      {
-        title: 'Date Time(UTC)',
-        dataIndex: 'dateTime',
-        className: 'column-date',
-        width: 80,
-        align: 'left',
-      },
-      {
-        title: 'Participants',
-        dataIndex: 'participant',
-        width: 60,
-        align: 'left',
-        ellipsis: true,
-      },
-      {
-        title: 'USDT',
-        dataIndex: 'quantity',
-        width: 60,
-        align: 'left',
-        ellipsis: true,
-      },
-      {
-        title: 'Token',
-        dataIndex: 'Amount',
-        width: 60,
-        align: 'left',
-        ellipsis: true,
-      },
-    ];
-
-    const ellipsisCenter = (str, preLength = 6, endLength = 4, skipStr = '...') => {
-      const totalLength = preLength + skipStr.length + endLength;
-      if (str.length > totalLength) {
-        return str.substr(0, preLength) + skipStr + str.substr(str.length - endLength, str.length);
-      }
-      return str;
-    };
-
-    useEffect(async () => {
-      const [newTransferData, newChartData] = await getTransferData();
-
-      // ellipsis center address
-      newTransferData.forEach(data => {
-        data['participant'] = ellipsisCenter(data['participant']);
-      });
-
-      newChartData.splice(0, newChartData.length - recordNum);
-      setTransferData(newTransferData);
-      setChartData(newChartData);
-    }, []);
-
-    return (
-      <div className="circleBorderCard cardContent">
-        <LaunchChart
-          data={chartData}
-          showXAxis
-          showYAxis
-          showGradient
-          lineColor="#e29227"
-          bgColor="#2f313500"
-        />
-        <Table
-          id="transferTable"
-          columns={transferTableHeader}
-          dataSource={transferData}
-          pagination={false}
-          scroll={{ y: 400 }}
-        />
       </div>
     );
   };
@@ -770,7 +623,7 @@ const LaunchpadProject = () => {
             setIsError(true)
             connectWallet()
           }
-          //TO-DO: Request UseAllocation API, process only when UseAllocation returns true
+          // TO-DO: Request UseAllocation API, process only when UseAllocation returns true
         const status = await (async () => {
           // NOTE (gary 2022.1.6): use toString method
           const approveAmount = (amount * Math.pow(10, poolMainCoinDecimals)).toString()
@@ -866,7 +719,7 @@ const LaunchpadProject = () => {
                   <div className="token-logo">
                     <img src={mainCoinLogoURI} alt="token-logo" className="token-image" />
                   </div>
-                  { isClickedMax ? <div style={{display:'flex', justifyContent:'center', alignItems:'center', marginLeft:'2rem', fontWeight:'700'}}>{receivedData.basicInfo.mainCoin}</div> : <Button className="max-btn" onClick={maxClick}>MAX</Button> }
+                  <div style={{display:'flex', justifyContent:'center', alignItems:'center', marginLeft:'2rem', fontWeight:'700'}}>{receivedData.basicInfo.mainCoin}</div>
                 </div>
               </InputGroup>
             </div>
@@ -930,7 +783,17 @@ const LaunchpadProject = () => {
           {/* <div className="circleBorderCard">
             <Allocation />
           </div> */}
-          <ProjectPool />
+          {receivedData &&
+            <ProjectPool 
+              saleStart={receivedData.saleStart}
+              saleEnd={receivedData.saleEnd}
+              tokenPrice={receivedData.tokenPrice}
+              totalSale={receivedData.totalSale}
+              vestingDate={resVestingDate}
+              vestingPercent={resVestingPercent}
+            />
+          }
+          
           { /* { !comparesaleDate || compareAlloDate ? "" : <ChartCard className="launchpad-chart" /> } 
           <ChartCard className="launchpad-chart" /> */}
         </div>
@@ -944,11 +807,14 @@ const LaunchpadProject = () => {
         {isError && <Alert message="Wallet is not connected." type="error" showIcon />}
         {isNotInvesting && <Alert message="Wait until Sale stage to purchase." type="info" showIcon />}
         {hasCollected && <Alert message="You have vested token for current vesting stage." type="info" showIcon />}
-        <TokenBanner posterUrl={receivedData.posterUrl} />
-        <TokenLogoLabel
-          projectName={receivedData.projectName}
-          tokenLogo={receivedData.tokenLogoUrl}
-        />
+        {/* <TokenBanner posterUrl={receivedData.posterUrl} /> */}
+        {receivedData &&
+          <TokenLogoLabel
+            projectName={receivedData.projectName}
+            tokenLogo={receivedData.tokenLogoUrl}
+          />
+        }
+        
         <CardArea />
       </div>
     </div>

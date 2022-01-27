@@ -167,3 +167,6 @@ export async function getProjectInfo(network, projectId) {
   return r.get(`${API_URL()}/launch/projects/${projectId}`)
 }
 
+/* export async function updatePoolID(network, projectId) {
+  return r.get(`${API_URL()}/launch/projects/${projectId}`)
+} */

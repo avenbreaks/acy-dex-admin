@@ -16,7 +16,7 @@ export function getRoutes() {
     "routes": [
       {
         "path": "/",
-        "redirect": "/launchmanager",
+        "redirect": "/launchpad",
         "exact": true
       },
       {
