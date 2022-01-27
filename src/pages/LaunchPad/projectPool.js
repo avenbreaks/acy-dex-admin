@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input, Button } from 'antd';
 import * as moment from 'moment';
+import axios from 'axios';
 import { history } from 'umi';
 import { ethers } from "ethers";
 import styles from './styles.less';
@@ -301,7 +302,10 @@ const ProjectPool = ({saleStart, saleEnd, tokenPrice, totalSale, vestingDate, ve
 
       // Update DB
       const tempPoolCount = totalPool - 1
-      updatePoolID(API_URL(), {tempPoolCount})
+      const apiUrlPrefix = API_URL();
+      axios.post(
+        `${apiUrlPrefix}/launch/updatePoolID?poolId=${tempPoolCount}`
+      )
       .then(res => {
         if(res) setSuccess(true)
       }).catch((e) => {
