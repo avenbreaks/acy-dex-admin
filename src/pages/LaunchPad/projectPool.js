@@ -389,6 +389,7 @@ const ProjectPool = ({saleStart, saleEnd, tokenPrice, totalSale, vestingDate, ve
             <Input style={{marginTop:'1rem'}} placeholder="_SwapRate" id="5" defaultValue={resSwapRate} />
             <Input style={{marginTop:'1rem'}} placeholder="_SwapType" id="6" defaultValue={swapType} />
             <Button type="primary" style={{marginTop:'1rem', marginLeft:'5px'}} onClick={createPoolClick}> Create </Button>
+            <h3 style={{fontWeight:'450', color:'red', marginTop:'1rem', width:'100%'}}>Pool ID: {totalPool-1}</h3>
             <h1 style={{color: 'white', marginTop:'1rem'}}> Step 3: Create Pool Distribution (Vesting) </h1>
             <Input placeholder="Pool ID" id="0" value={totalPool - 1} />
             <Input style={{marginTop:'1rem'}} placeholder="Distribution time" id="1" defaultValue={vestingDate} onChange={toTimestampArr} />
