@@ -160,11 +160,11 @@ export async function useAllocation(network, walletId, projectToken, amount) {
 }
 
 export async function getProjects(network) {
-  return r.get(`${API_URL()}/launch/projects`)
+  return r.get(`${urlPrefix}/launch/projects`)
 }
 
 export async function getProjectInfo(network, projectId) {
-  return r.get(`${API_URL()}/launch/projects/${projectId}`)
+  return r.get(`${urlPrefix}/launch/projects/${projectId}`)
 }
 
 /* export async function updatePoolID(network, projectId) {
