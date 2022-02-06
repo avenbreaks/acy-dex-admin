@@ -37,9 +37,10 @@ const ProjectPool = ({
   const swapType = 0;
 
   const [distributionArr, setDistributionArr] = useState([]);
+  const [distributionPercentArr, setDistributionPercentArr] = useState([]);
   const [success, setSuccess] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [distributionPercentArr, setDistributionPercentArr] = useState([]);
+  
   const [isYesClicked, setIsYesClicked] = useState(false);
   const [isNoClicked, setIsNoClicked] = useState(false);
   const [poolID, setPoolID] = useState(null);
