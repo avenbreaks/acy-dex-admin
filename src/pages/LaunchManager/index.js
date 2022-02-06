@@ -27,7 +27,7 @@ const { Option } = Select;
 // 3. 所有依赖其他字段的值。都不可修改，视情况是否显示
 
 const BSC_testnet_PoolContract_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
-// const BSC_mainnet_PoolContract_address = "";
+const BSC_mainnet_PoolContract_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
 
 const LaunchManager = props => {
   const [projectInfo, setProjectInfo] = useState({
@@ -42,6 +42,7 @@ const LaunchManager = props => {
   });
   const [totalPool, setTotalPool] = useState(0);
   const [poolID, setPoolID] = useState(null);
+  const [claimPoolID, setClaimPoolID] = useState(null);
   const [receivedData, setReceivedData] = useState();
   const [approveTokenAddress, setApproveTokenAddress] = useState(null);
   const [approveAmount, setApproveAmount] = useState(0);
@@ -51,8 +52,6 @@ const LaunchManager = props => {
 
   // link to launch contract address
   const { account, chainId, library, activate, active } = useWeb3React();
-  
-
   const { ethereum } = window;
   let ethersProvider;
   let ethersSigner;
@@ -90,31 +89,13 @@ const LaunchManager = props => {
     [account]
   );
 
-  const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
-
-  useEffect(
-    () => {
-      getProjects(API_URL())
-        .then(res => {
-          if (res) {
-            console.log(res);
-            setProjectInfo({ ...projectInfo, TotalProject: res.length });
-            console.log(projectInfo.TotalProject);
-          } else {
-            console.log('Failed to retrieve data from database');
-          }
-        })
-        .catch(e => console.error(e));
-    },
-    [library, chainId, account]
-  );
-
   useEffect(
     () => {
       getProjectInfo(API_URL(), projectInfo.ProjectID)
         .then(res => {
           if (res) {
             // extract data from string
+            res['projectName'] = res.basicInfo.projectName;
             res['saleStart'] = formatTime(res.scheduleInfo.saleStart);
             res['saleEnd'] = formatTime(res.scheduleInfo.saleEnd);
 
@@ -158,47 +139,36 @@ const LaunchManager = props => {
       if (receivedData && receivedData.tokenPrice < 1) {
         const temp =
           Math.floor(((1 * 10 ** projectInfo.MainCoinDecimal) / receivedData.tokenPrice) *
-          10 ** projectInfo.TokenDecimal);
+            10 ** projectInfo.TokenDecimal);
         setProjectInfo({ ...projectInfo, resSwapRate: temp });
       }
       if (receivedData && receivedData.tokenPrice > 1) {
         const temp =
-        Math.floor(((receivedData.tokenPrice * 10 ** projectInfo.TokenDecimal) / 1) *
-          10 ** projectInfo.MainCoinDecimal);
+          Math.floor(((receivedData.tokenPrice * 10 ** projectInfo.TokenDecimal) / 1) *
+            10 ** projectInfo.MainCoinDecimal);
         setProjectInfo({ ...projectInfo, resSwapRate: temp });
       }
     },
     [projectInfo.TokenDecimal]
   );
 
-  useEffect(
-    async () => {
-      const status = await (async () => {
-        const res = await poolContract.poolsCount().catch(e => {
-          console.log(e);
-          return new CustomError('CustomError while getting pool count');
-        });
-        console.log('POOOOOOOOOOOOOLS');
-        setTotalPool(res);
-        return res;
-      })();
-      console.log('Getting pool count: ', status);
+  // useEffect(
+  //   async () => {
+  //     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+  //     const res = await poolContract.poolsCount();
+  //     console.log('total pools', res);
+  //     setTotalPool(res);
+  //   },
+  //   []
+  // );
 
-      // Update DB
-      /* const tempPoolCount = totalPool - 1;
-      const apiUrlPrefix = API_URL();
-      axios
-        .post(`${apiUrlPrefix}/launch/updatePoolID?poolId=${tempPoolCount}`)
-        .then(res => {
-          if (res) setSuccess(true);
-        })
-        .catch(e => {
-          setHasError(true);
-          console.log(e);
-        }); */
-    },
-    [poolID]
-  );
+  useEffect(async () => {
+    const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+    const res = await poolContract.poolsCount();
+    const poolCounts = Number(res.toString());
+    setTotalPool(poolCounts);
+    setPoolID(poolCounts - 1);
+  }, [])
 
   // const onboardButton = document.getElementById('connectButton');
   // const network = document.getElementById('network');
@@ -215,8 +185,8 @@ const LaunchManager = props => {
       const res = bigIntIDs.includes(id)
         ? BigInt(value)
         : addressIDs.includes(id)
-        ? ethers.utils.getAddress(value)
-        : value;
+          ? ethers.utils.getAddress(value)
+          : value;
       const timeOut = setTimeout(() => {
         setCreatePoolInfo({ ...createPoolInfo, [poolKeys[id]]: res });
       }, 500);
@@ -265,7 +235,7 @@ const LaunchManager = props => {
       console.log('d is ', res, accounts);
       return res;
     });
-    const amountBig = BigInt(9999999999999999999999999);
+    const amountBig = BigInt(9999999999999999999999999999);
 
     const result = await tokenContract.approve(
       BSC_testnet_PoolContract_address,
@@ -274,14 +244,13 @@ const LaunchManager = props => {
         gasLimit: 60000,
       }
     );
-    console.log('result is ', result);
+    console.log('result is', result);
 
     const allowance = await tokenContract
       .allowance(accounts[0], BSC_testnet_PoolContract_address)
       .catch(e => {
         console.log('err', e, accounts);
       });
-    amount.innerHTML = allowance;
     console.log('allowance is ', allowance, await tokenContract.symbol());
   };
 
@@ -317,7 +286,7 @@ const LaunchManager = props => {
       if (contract.address === undefined) {
         return undefined;
       }
-      setProjectInfo({...projectInfo, TokenAddress: contract.address})
+      setProjectInfo({ ...projectInfo, TokenAddress: contract.address })
       console.log(
         `Contract mined! address: ${contract.address} transactionHash: ${contract.transactionHash}`
       );
@@ -360,23 +329,18 @@ const LaunchManager = props => {
   };
 
   const createPoolClick = async () => {
-    const status = await (async () => {
-      const result = await poolContract.CreatePool(
-        ethers.utils.getAddress(projectInfo.TokenAddress),
-        ethers.utils.getAddress(projectInfo.MainCoinAddress),
-        BigInt(receivedData.totalSale * (10 ** projectInfo.TokenDecimal)),
-        receivedData.tsSaleStart,
-        receivedData.tsSaleEnd,
-        BigInt(projectInfo.resSwapRate),
-        BigInt(projectInfo.SwapType)
-      );
-      setPoolID(0).catch(e => {
-        console.log(e);
-        return new CustomError('CustomError while buying token');
-      });
-      return result;
-    })();
-    console.log('create pool', status);
+    console.log('Creating pool');
+    const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+    const result = await poolContract.CreatePool(
+      ethers.utils.getAddress(projectInfo.TokenAddress),
+      ethers.utils.getAddress(projectInfo.MainCoinAddress),
+      BigInt(receivedData.totalSale * (10 ** projectInfo.TokenDecimal)),
+      receivedData.tsSaleStart,
+      receivedData.tsSaleEnd,
+      BigInt(projectInfo.resSwapRate),
+      BigInt(projectInfo.SwapType)
+    );
+    console.log('create pool result', result);
   };
 
   // const contractInfoChange = (e) => {
@@ -389,31 +353,19 @@ const LaunchManager = props => {
   // }
 
   const poolDistributionClick = async () => {
-    const status = await (async () => {
-      const result = await poolContract
-        .UpdatePoolDistribution(poolID, distributionArr, distributionPercentArr)
-        .catch(e => {
-          console.log(e);
-          return new CustomError('CustomError while buying token');
-        });
-      return result;
-    })();
-    console.log('create pool', status);
+    const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+    const result = await poolContract.UpdatePoolDistribution(BigInt(poolID), distributionArr, distributionPercentArr);
+    console.log('pool distribution result', result);
   };
 
   const vestingClaimClicked = async () => {
-    const status = await (async () => {
-      const result = await poolContract.WithdrawERC20ToCreator(poolID).catch(e => {
-        console.log(e);
-        return new CustomError('CustomError while withdrawing token & money raised');
-      });
-      return result;
-    })();
-    console.log('Token & Money Raised claimed: ', status);
+    const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+    const result = await poolContract.WithdrawERC20ToCreator(claimPoolID);
+    console.log('Token & Money Raised claimed: ', result);
   };
 
   const handleValueChose = e => {
-    setProjectInfo({ ...projectInfo, ProjectID: Number(e.target.value - 1) });
+    setProjectInfo({ ...projectInfo, ProjectID: Number(e.target.value) });
     console.log(projectInfo.ProjectID);
   };
 
@@ -425,6 +377,13 @@ const LaunchManager = props => {
         style={{ marginBottom: '1rem', width: '50%' }}
         onChange={handleValueChose}
       />
+      {receivedData &&
+        <>
+          <h1 style={{ color: 'white' }}> ProjectInfo </h1>
+          <div>Project Name: {receivedData.projectName}</div>
+        </>
+      }
+
       <h1 style={{ color: 'white' }}> Step 1: Approve token / Create ticket contract address </h1>
       <Button type="primary" id="connectButton" className={styles.connectButton}>
         ConnectMetaMask
@@ -556,12 +515,12 @@ const LaunchManager = props => {
           Create
         </Button>
         <h3 style={{ fontWeight: '450', color: 'red', marginTop: '1rem', width: '100%' }}>
-          Pool ID: {totalPool - 1}
+          Total Pool: {totalPool}
         </h3>
         <h1 style={{ color: 'white', marginTop: '1rem' }}>
           Step 3: Create Pool Distribution (Vesting)
         </h1>
-        <Input placeholder="Pool ID" id="0" value={totalPool - 1} />
+        <Input placeholder="Pool ID" id="0" value={poolID} onChange={e => setPoolID(e.target.value)} />
         {receivedData && (
           <div>
             <Input
@@ -590,7 +549,7 @@ const LaunchManager = props => {
         <h1 style={{ color: 'white', marginTop: '1rem' }}>
           Step 4: Withdraw token & money raised (Vesting)
         </h1>
-        <Input placeholder="Pool ID" id="0" onChange={e => setPoolID(e.target.value)} />
+        <Input placeholder="Pool ID" id="0" onChange={e => setClaimPoolID(e.target.value)} />
         <Button
           type="primary"
           style={{ marginTop: '1rem', marginLeft: '5px' }}
