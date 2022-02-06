@@ -235,7 +235,7 @@ const LaunchManager = props => {
       console.log('d is ', res, accounts);
       return res;
     });
-    const amountBig = BigInt(approveAmo.value * 10 ** decimal);
+    const amountBig = 999999999999999999999;
 
     const result = await tokenContract.approve(
       BSC_testnet_PoolContract_address,
@@ -334,11 +334,11 @@ const LaunchManager = props => {
       const result = await poolContract.CreatePool(
         ethers.utils.getAddress(projectInfo.TokenAddress),
         ethers.utils.getAddress(projectInfo.MainCoinAddress),
-        createPoolInfo.StartAmount,
+        BigInt(receivedData.totalSale * (10 ** projectInfo.TokenAddress)),
         receivedData.tsSaleStart,
         receivedData.tsSaleEnd,
-        projectInfo.resSwapRate,
-        projectInfo.SwapType
+        BigInt(projectInfo.resSwapRate),
+        BigInt(projectInfo.SwapType)
       );
       setPoolID(0).catch(e => {
         console.log(e);
@@ -440,8 +440,7 @@ const LaunchManager = props => {
             style={{ marginTop: '1rem', marginLeft: '5px' }}
             onClick={onClickDeployToken}
           >
-            {' '}
-            Deploy{' '}
+            Deploy
           </Button>
           <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
             Approve token address
@@ -449,12 +448,14 @@ const LaunchManager = props => {
           <Input
             id="approveAdd"
             placeholder="Token Address"
+            value={projectInfo.TokenAddress === null ? 'NULL' : projectInfo.TokenAddress}
             onChange={e => setApproveTokenAddress(e)}
           />
           <Input
             id="approveAmo"
             style={{ marginTop: '1rem' }}
             placeholder="Approve Amount"
+            value='999999999999999999999'
             onChange={e => setApproveAmount(e)}
           />
           <Button
