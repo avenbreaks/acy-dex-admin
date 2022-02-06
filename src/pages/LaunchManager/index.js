@@ -51,7 +51,7 @@ const LaunchManager = props => {
 
   // link to launch contract address
   const { account, chainId, library, activate, active } = useWeb3React();
-  const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+  
 
   const { ethereum } = window;
   let ethersProvider;
@@ -74,6 +74,12 @@ const LaunchManager = props => {
       .format('MM/DD/YYYY HH:mm:ss');
   };
 
+  const onboardButton = document.getElementById('connectButton');
+  // const network = document.getElementById('network');
+  // const chainId = document.getElementById('chainId');
+  // const account = document.getElementById('accounts');
+  // const amount = document.getElementById('amount');
+
   const connectWalletByLocalStorage = useConnectWallet();
   useEffect(
     () => {
@@ -83,6 +89,8 @@ const LaunchManager = props => {
     },
     [account]
   );
+
+  const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
 
   useEffect(
     () => {
@@ -149,14 +157,14 @@ const LaunchManager = props => {
     () => {
       if (receivedData && receivedData.tokenPrice < 1) {
         const temp =
-          ((1 * 10 ** projectInfo.MainCoinDecimal) / receivedData.tokenPrice) *
-          10 ** projectInfo.TokenDecimal;
+          Math.floor(((1 * 10 ** projectInfo.MainCoinDecimal) / receivedData.tokenPrice) *
+          10 ** projectInfo.TokenDecimal);
         setProjectInfo({ ...projectInfo, resSwapRate: temp });
       }
       if (receivedData && receivedData.tokenPrice > 1) {
         const temp =
-          ((receivedData.tokenPrice * 10 ** projectInfo.TokenDecimal) / 1) *
-          10 ** projectInfo.MainCoinDecimal;
+        Math.floor(((receivedData.tokenPrice * 10 ** projectInfo.TokenDecimal) / 1) *
+          10 ** projectInfo.MainCoinDecimal);
         setProjectInfo({ ...projectInfo, resSwapRate: temp });
       }
     },
@@ -218,6 +226,28 @@ const LaunchManager = props => {
     }
   };
 
+  const onClickConnect = async () => {
+    try {
+      console.log("CLIck", web3)
+
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+      const chainIds = await ethereum.request({
+        method: 'eth_chainId',
+      })
+
+      const networkId = await ethereum.request({
+        method: 'net_version',
+      })
+
+      network.innerHTML = networkId;
+      account.innerHTML = accounts;
+      chainId.innerHTML = chainIds;
+      userAddress = accounts;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const onClickApprove = async () => {
     let approveAdd = document.getElementById('approveAdd');
     let approveAmo = document.getElementById('approveAmo');
@@ -235,7 +265,7 @@ const LaunchManager = props => {
       console.log('d is ', res, accounts);
       return res;
     });
-    const amountBig = 999999999999999999999;
+    const amountBig = BigInt(9999999999999999999999999);
 
     const result = await tokenContract.approve(
       BSC_testnet_PoolContract_address,
@@ -334,7 +364,7 @@ const LaunchManager = props => {
       const result = await poolContract.CreatePool(
         ethers.utils.getAddress(projectInfo.TokenAddress),
         ethers.utils.getAddress(projectInfo.MainCoinAddress),
-        BigInt(receivedData.totalSale * (10 ** projectInfo.TokenAddress)),
+        BigInt(receivedData.totalSale * (10 ** projectInfo.TokenDecimal)),
         receivedData.tsSaleStart,
         receivedData.tsSaleEnd,
         BigInt(projectInfo.resSwapRate),
@@ -455,7 +485,7 @@ const LaunchManager = props => {
             id="approveAmo"
             style={{ marginTop: '1rem' }}
             placeholder="Approve Amount"
-            value='999999999999999999999'
+            value='9999999999999999999999999'
             onChange={e => setApproveAmount(e)}
           />
           <Button
@@ -464,8 +494,7 @@ const LaunchManager = props => {
             style={{ marginTop: '1rem', marginLeft: '5px' }}
             onClick={onClickApprove}
           >
-            {' '}
-            Submit{' '}
+            Submit
           </Button>
         </div>
         <h1 style={{ color: 'white', marginTop: '1rem' }}> Step 2: Create Pool </h1>
