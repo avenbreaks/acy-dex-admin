@@ -286,9 +286,6 @@ const ProjectPool = ({
   };
 
   const createPoolClick = async () => {
-    if (!account) {
-      window.alert('Connect to your wallet!');
-    }
     const status = await (async () => {
       const result = await poolContract.CreatePool(
         createPoolInfo.Token,
@@ -310,9 +307,6 @@ const ProjectPool = ({
 
   useEffect(
     async () => {
-      if (!account) {
-        window.alert('Connect to your wallet!');
-      }
       const status = await (async () => {
         const res = await poolContract.poolsCount().catch(e => {
           console.log(e);
@@ -341,9 +335,6 @@ const ProjectPool = ({
   );
 
   const poolDistributionClick = async () => {
-    if (!account) {
-      window.alert('Connect to your wallet!');
-    }
     const status = await (async () => {
       const result = await poolContract
         .UpdatePoolDistribution(poolID, fVestingDate, fVestingPercent)
@@ -357,9 +348,6 @@ const ProjectPool = ({
   };
 
   const vestingClaimClicked = async () => {
-    if (!account) {
-      window.alert('Connect to your wallet!');
-    }
     const status = await (async () => {
       const result = await poolContract.WithdrawERC20ToCreator(poolID).catch(e => {
         console.log(e);

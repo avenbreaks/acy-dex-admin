@@ -9,10 +9,9 @@ import IncomingProjects from './components/IncomingProjects.js';
 import EndedProjects from './components/EndedProjects.js';
 import BubblyButton from './components/BubblyButton.js';
 import RaiseButton from './components/RaiseButton.js';
-import $ from 'jquery';
 import { getProjects } from '@/services/api';
 import ExpandingContent from './components/ExpandedContent';
-import {useConnectWallet} from '@/components/ConnectWallet';
+import { useConnectWallet } from '@/components/ConnectWallet';
 import { useWeb3React } from '@web3-react/core';
 import { API_URL } from '@/constants'
 
@@ -32,14 +31,11 @@ const Pool = props => {
   // wallet connect
   const { account, chainId, library, activate } = useWeb3React();
   const connectWalletByLocalStorage = useConnectWallet();
-  
   useEffect(() => {
     if (!account) {
       connectWalletByLocalStorage();
     }
   }, [account]);
-
-  
 
   // project variables
   useEffect(() => {

@@ -97,11 +97,6 @@ const LaunchpadProject = () => {
 
 
   // FUNCTIONS
-  const connectWallet = async () =>  {
-    activate(binance);
-    activate(injected);
-  };
-
   const clickToWebsite = () => {
     const newWindow = window.open(receivedData.social[0].Website, '_blank', 'noopener,noreferrer');
     if (newWindow) newWindow.opener = null;
@@ -177,6 +172,13 @@ const LaunchpadProject = () => {
   }
 
   // HOOKS
+  const connectWalletByLocalStorage = useConnectWallet();
+  useEffect(() => {
+    if (!account) {
+      connectWalletByLocalStorage();
+    }
+  }, [account]);
+
   // Retrieve project data from db
   useEffect(() => {
     getProjectInfo(API_URL(), projectId)
@@ -234,10 +236,6 @@ const LaunchpadProject = () => {
 
   // fetching data from Smart Contract
   useEffect(async () => {
-    if (!account) {
-      connectWallet();
-    }
-
     // project must have poolID
     if (!poolID) return;
 
@@ -450,7 +448,6 @@ const LaunchpadProject = () => {
 
         console.log(`click allocation card cover`, allocationInfo);      
         if (!account || !receivedData.projectToken) {
-          connectWallet();
           return;
         }
 
@@ -578,7 +575,6 @@ const LaunchpadProject = () => {
       } else {
         if (!account) {
           setIsError(true)
-          connectWallet()
         }
         // Check if users have collected token for current vesting stage
         const investorData = await PoolContract.GetInvestmentData(poolID, account)
@@ -621,7 +617,6 @@ const LaunchpadProject = () => {
         } else {
           if (!account) {
             setIsError(true)
-            connectWallet()
           }
           // TO-DO: Request UseAllocation API, process only when UseAllocation returns true
         const status = await (async () => {
