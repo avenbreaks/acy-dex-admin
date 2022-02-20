@@ -5,6 +5,8 @@ import Web3 from 'web3';
 import { ContractFactory } from 'ethers';
 import { history } from 'umi';
 import { ethers } from 'ethers';
+import { BigNumber } from '@ethersproject/bignumber';
+import { JsonRpcProvider } from "@ethersproject/providers";
 import styles from './styles.less';
 import './styles.css';
 import { getContract } from '../../acy-dex-swap/utils/index.js';
@@ -46,6 +48,8 @@ const LaunchManager = props => {
   const [totalPool, setTotalPool] = useState(0);
   const [poolID, setPoolID] = useState(null);
   const [claimPoolID, setClaimPoolID] = useState(null);
+  const [checkPoolID, setCheckPoolID] = useState(null);
+  const [poolBaseData, setPoolBaseData] = useState([]);
   const [receivedData, setReceivedData] = useState({});
   const [approveTokenAddress, setApproveTokenAddress] = useState(null);
   const [approveAmount, setApproveAmount] = useState('0');
@@ -91,6 +95,51 @@ const LaunchManager = props => {
     },
     [projectInfo.TokenAddress]
   );
+
+  const convertUnixTime = unixTime => {
+    const data = new Date(Number(unixTime) * 1000).toUTCString()
+    return data
+  }
+
+  const getPoolData = async (lib, acc) => {
+    const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, lib, acc);
+    const pool = []
+
+    // 合约函数调用
+    const baseData = await poolContract.GetPoolBaseData(receivedData.poolID)
+    const status = await poolContract.GetPoolStatus(receivedData.poolID)
+
+    if(!baseData) return
+
+    // getpoolbasedata 数据解析
+    const token1Address = baseData[0]
+    const token2Address = baseData[1]
+    const tokenList = TOKEN_LIST()
+    const token2Info = tokenList.find(item => item.address == token2Address)
+
+    const token1contract = getContract(token1Address, ERC20ABI, lib, acc)
+    const token2contract = getContract(token2Address, ERC20ABI, lib, acc)
+
+    const token1decimal = await token1contract.decimals()
+    const token2decimal = await token2contract.decimals()
+    // 不解析时间戳
+    const res1 = BigNumber.from(baseData[2]).toBigInt().toString().slice(0,-(token1decimal)) // 获取销售的token的总数
+    const res2 = BigNumber.from(baseData[3]).toBigInt().toString().slice(0,-(token1decimal)) // 已销售的token的数量
+    const res3 = BigNumber.from(baseData[4]).toBigInt()
+    const res4 = BigNumber.from(baseData[5]).toBigInt()
+
+    // 获取当前阶段
+    const saleStartDate = convertUnixTime(res3)
+    const saleEndDate = convertUnixTime(res4)
+
+    // 存放数据
+    pool.push(token1Address, token2Address, res1, res2, saleStartDate, saleEndDate, status)
+    console.log("POOOOOOOL")
+    console.log(pool)
+
+    // set数据
+    setPoolBaseData(pool)
+  }
 
   const getProjectData = projectID => {
     if (!projectID) {
@@ -148,6 +197,15 @@ const LaunchManager = props => {
         console.log('Project Detail check errrrrrrrrrrr', e);
       });
   };
+
+  useEffect(async () => {
+    if (account && library) {
+      getPoolData(library, account)
+    } else {
+      const provider = new JsonRpcProvider(LAUNCH_RPC_URL(), CHAINID());  // different RPC for mainnet
+      const accnt = "0x0000000000000000000000000000000000000000";
+    }
+  }, [library, account, receivedData.poolID])
 
   useEffect(
     () => {
@@ -349,6 +407,23 @@ const LaunchManager = props => {
           <div>Project Name: {receivedData.projectName}</div>
         </>
       )}
+
+      {poolBaseData &&
+        <div>
+          <h1 style={{ color: 'white' }}> Project Pool Base Data </h1>
+          <span>Token Address: {poolBaseData[0]} </span>
+          <br />
+          <span>Main Address: {poolBaseData[1]} </span>
+          <br />
+          <span>Total token: {poolBaseData[2]} </span>
+          <br />
+          <span>Total Sale: {poolBaseData[3]} </span>
+          <br />
+          <span>Sale Date: {poolBaseData[4]} </span>
+          <br />
+          <span>Distribution Date: {poolBaseData[5]} </span>
+        </div>
+      }
 
       <div style={projectInfo.ProjectID ? {} : { display: 'none' }}>
         <h1 style={{ color: 'white', marginTop: '1rem' }}>
