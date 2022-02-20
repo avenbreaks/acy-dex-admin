@@ -21,6 +21,7 @@ import { LAUNCHPAD_ADDRESS, LAUNCH_RPC_URL, CHAINID, API_URL, TOKEN_LIST } from 
 import { CustomError } from '@/acy-dex-swap/utils';
 import { useConnectWallet } from '@/components/ConnectWallet';
 import project from '@/models/project';
+import { isWindows } from 'react-device-detect';
 
 // variables
 // const BSC_testnet_PoolContract_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
@@ -45,18 +46,29 @@ const LaunchManager = props => {
     resSwapRate: null,
     SwapType: null,
   });
-  const [totalPool, setTotalPool] = useState(0);
+  const [totalPool, setTotalPool] = useState(null);
   const [poolID, setPoolID] = useState(null);
+  const [isShowingForm, setIsShowingForm] = useState(false);
   const [claimPoolID, setClaimPoolID] = useState(null);
   const [checkPoolID, setCheckPoolID] = useState(null);
-  const [poolBaseData, setPoolBaseData] = useState([]);
+  const [poolBaseData, setPoolBaseData] = useState({
+    token1Address: null,
+    token2Address: null,
+    totalSale: null,
+    alreadySale: null,
+    saleStart: null,
+    saleEnd: null,
+    status: null,
+    vestingSchedule: [],
+    vestingStage: []
+  });
   const [receivedData, setReceivedData] = useState({});
   const [approveTokenAddress, setApproveTokenAddress] = useState(null);
   const [approveAmount, setApproveAmount] = useState('0');
   const [distributionPercentArr, setDistributionPercentArr] = useState([]);
   const [distributionArr, setDistributionArr] = useState([]);
   const [distributionArrDate, setDistributionArrDate] = useState([]);
-  
+
 
   // link to launch contract address
   const { account, chainId, library, activate, active } = useWeb3React();
@@ -76,6 +88,18 @@ const LaunchManager = props => {
     },
     [account]
   );
+
+  useEffect(() => {
+    if (!poolID) return;
+
+    if (account && library) {
+      getPoolData(library, account).catch(e => console.log(e));
+    } else {
+      const provider = new JsonRpcProvider(LAUNCH_RPC_URL(), CHAINID());  // different RPC for mainnet
+      const accnt = "0x0000000000000000000000000000000000000000";
+      getPoolData(provider, accnt).catch(e => console.log(e));
+    };
+  }, [poolID])
 
   useEffect(
     async () => {
@@ -97,48 +121,73 @@ const LaunchManager = props => {
   );
 
   const convertUnixTime = unixTime => {
-    const data = new Date(Number(unixTime) * 1000).toUTCString()
-    return data
+    if (!unixTime) return '';
+    const datestring = moment.utc(Number(unixTime) * 1000).locale('en').format("YYYY-MM-DD HH:mm:ss");
+    return datestring;
   }
 
-  const getPoolData = async (lib, acc) => {
+  const getPoolData = async (lib, acc, poolId = null) => {
     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, lib, acc);
-    const pool = []
+    const res = await poolContract.poolsCount();
+    const poolCounts = Number(res.toString());
+    window.poolContract = poolContract;
+    setTotalPool(poolCounts);
 
+    const poolData = {
+      token1Address: null,
+      token2Address: null,
+      totalSale: null,
+      alreadySale: null,
+      saleStart: null,
+      saleEnd: null,
+      status: null,
+      vestingSchedule: [],
+      vestingStage: []
+    };
+
+    const statusMap = {
+      1: 'PreCreated',
+      2: 'PreOpen',
+      3: 'Open',
+      4: 'PreDistribute',
+      5: 'Distributing',
+      6: 'Finished',
+      7: 'closed'
+    };
+
+    if (poolId) poolID = poolId;
     // 合约函数调用
-    const baseData = await poolContract.GetPoolBaseData(receivedData.poolID)
-    const status = await poolContract.GetPoolStatus(receivedData.poolID)
+    console.log('poolID', poolID);
+    const baseData = await poolContract.GetPoolBaseData(poolID);
+    const distributionData = await poolContract.GetPoolDistributionData(poolID);
+    const status = await poolContract.GetPoolStatus(poolID);
+    poolData.status = statusMap[status];
 
-    if(!baseData) return
+    console.log('Base Data', baseData);
+    console.log('Pool Status', status);
+    console.log('Distribution Data', distributionData);
 
     // getpoolbasedata 数据解析
-    const token1Address = baseData[0]
-    const token2Address = baseData[1]
-    const tokenList = TOKEN_LIST()
-    const token2Info = tokenList.find(item => item.address == token2Address)
+    poolData.token1Address = baseData[0];
+    poolData.token2Address = baseData[1];
 
-    const token1contract = getContract(token1Address, ERC20ABI, lib, acc)
-    const token2contract = getContract(token2Address, ERC20ABI, lib, acc)
-
-    const token1decimal = await token1contract.decimals()
-    const token2decimal = await token2contract.decimals()
+    const token1contract = getContract(poolData.token1Address, ERC20ABI, lib, acc);
+    const token2contract = getContract(poolData.token2Address, ERC20ABI, lib, acc);
+    const token1decimal = await token1contract.decimals();
+    const token2decimal = await token2contract.decimals();
     // 不解析时间戳
-    const res1 = BigNumber.from(baseData[2]).toBigInt().toString().slice(0,-(token1decimal)) // 获取销售的token的总数
-    const res2 = BigNumber.from(baseData[3]).toBigInt().toString().slice(0,-(token1decimal)) // 已销售的token的数量
-    const res3 = BigNumber.from(baseData[4]).toBigInt()
-    const res4 = BigNumber.from(baseData[5]).toBigInt()
-
-    // 获取当前阶段
-    const saleStartDate = convertUnixTime(res3)
-    const saleEndDate = convertUnixTime(res4)
+    poolData.totalSale = BigNumber.from(baseData[2]).toBigInt().toString().slice(0, -(token1decimal)); // 获取销售的token的总数
+    poolData.alreadySale = BigNumber.from(baseData[3]).toBigInt().toString().slice(0, -(token1decimal)); // 已销售的token的数量
+    poolData.saleStart = BigNumber.from(baseData[4]).toBigInt();
+    poolData.saleEnd = BigNumber.from(baseData[5]).toBigInt();
+    poolData.vestingSchedule = distributionData[1].map(uTime => BigNumber.from(uTime).toBigInt());
+    poolData.vestingStage = distributionData[2].map(vestingRate => BigNumber.from(vestingRate).toBigInt());
 
     // 存放数据
-    pool.push(token1Address, token2Address, res1, res2, saleStartDate, saleEndDate, status)
-    console.log("POOOOOOOL")
-    console.log(pool)
+    console.log("POOOOOOOL", poolData);
 
     // set数据
-    setPoolBaseData(pool)
+    setPoolBaseData(poolData);
   }
 
   const getProjectData = projectID => {
@@ -154,10 +203,7 @@ const LaunchManager = props => {
           res['projectName'] = res.basicInfo.projectName;
           res['projectToken'] = res.basicInfo.projectToken;
           res['poolID'] = res.basicInfo.poolID;
-
-          if (res.basicInfo.poolID <= totalPool) {
-            setPoolID(res.basicInfo.poolID);
-          }
+          setPoolID(res.basicInfo.poolID);
 
           res['saleStart'] = res.scheduleInfo.saleStart;
           res['saleEnd'] = res.scheduleInfo.saleEnd;
@@ -182,7 +228,7 @@ const LaunchManager = props => {
           });
 
           const fVestingDate = res.scheduleInfo.distributionData[1].map(item => BigInt(item));
-          const allVestingDate =  res.scheduleInfo.distributionData[1].map(item => new Date(Number(item) * 1000).toUTCString());
+          const allVestingDate = res.scheduleInfo.distributionData[1].map(item => convertUnixTime(item));
           const fVestingPercent = res.scheduleInfo.distributionData[2].map(item => BigInt(item));
           console.log(fVestingDate, fVestingPercent);
           setDistributionArr(fVestingDate);
@@ -195,17 +241,8 @@ const LaunchManager = props => {
       })
       .catch(e => {
         console.log('Project Detail check errrrrrrrrrrr', e);
-      });
+      })
   };
-
-  useEffect(async () => {
-    if (account && library) {
-      getPoolData(library, account)
-    } else {
-      const provider = new JsonRpcProvider(LAUNCH_RPC_URL(), CHAINID());  // different RPC for mainnet
-      const accnt = "0x0000000000000000000000000000000000000000";
-    }
-  }, [library, account, receivedData.poolID])
 
   useEffect(
     () => {
@@ -219,28 +256,17 @@ const LaunchManager = props => {
         console.log('swapRate', swapRate);
 
         if (swapRate >= 1) {
-          setProjectInfo({ ...projectInfo, SwapType: 1, resSwapRate: Math.round(swapRate) });
+          setProjectInfo({ ...projectInfo, SwapType: 1, resSwapRate: Math.ceil(swapRate) });
         } else {
           swapRate =
             (receivedData.totalSale * 10 ** projectInfo.TokenDecimal) /
             (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal);
-          setProjectInfo({ ...projectInfo, SwapType: 0, resSwapRate: Math.round(swapRate) });
+          setProjectInfo({ ...projectInfo, SwapType: 0, resSwapRate: Math.floor(swapRate) });
         }
       }
     },
     [projectInfo.TokenDecimal]
   );
-
-  useEffect(async () => {
-    try {
-      const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
-      const res = await poolContract.poolsCount();
-      const poolCounts = Number(res.toString());
-      setTotalPool(poolCounts);
-    } catch {
-      console.log('Unable to retrive pool');
-    }
-  }, []);
 
   const onClickApprove = async () => {
     ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
@@ -348,13 +374,21 @@ const LaunchManager = props => {
       createPoolInfo.EndTime,
       createPoolInfo.SwapRate,
       createPoolInfo.SwapType
-    );
+    )
     console.log('create pool result', result);
 
     const res = await poolContract.poolsCount();
     const poolCounts = Number(res.toString());
-    setPoolID(poolID + 1);
+    console.log('poolCount', poolCounts);
+
+    setPoolID(poolCounts);
     setTotalPool(poolCounts + 1);
+
+    setTimeout(() => {
+      const provider = new JsonRpcProvider(LAUNCH_RPC_URL(), CHAINID());  // different RPC for mainnet
+      const accnt = "0x0000000000000000000000000000000000000000";
+      getPoolData(provider, accnt, poolCounts).catch(e => console.log(e));
+    }, 30000);
   };
 
   // const contractInfoChange = (e) => {
@@ -368,6 +402,9 @@ const LaunchManager = props => {
 
   const poolDistributionClick = async () => {
     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+    console.log('distributionArr', distributionArr);
+    console.log('distributionPercentArr', distributionPercentArr);
+
     const result = await poolContract.UpdatePoolDistribution(
       BigInt(poolID),
       distributionArr,
@@ -390,6 +427,11 @@ const LaunchManager = props => {
   const onBlurProjectID = e => {
     let projectID = e.target.value;
     getProjectData(projectID);
+    if (projectID) {
+      setIsShowingForm(true);
+    } else {
+      setIsShowingForm(false);
+    }
   };
 
   return (
@@ -408,30 +450,34 @@ const LaunchManager = props => {
         </>
       )}
 
-      {poolBaseData &&
-        <div>
-          <h1 style={{ color: 'white' }}> Project Pool Base Data </h1>
-          <span>Token Address: {poolBaseData[0]} </span>
-          <br />
-          <span>Main Address: {poolBaseData[1]} </span>
-          <br />
-          <span>Total token: {poolBaseData[2]} </span>
-          <br />
-          <span>Total Sale: {poolBaseData[3]} </span>
-          <br />
-          <span>Sale Date: {poolBaseData[4]} </span>
-          <br />
-          <span>Distribution Date: {poolBaseData[5]} </span>
-        </div>
-      }
 
-      <div style={projectInfo.ProjectID ? {} : { display: 'none' }}>
+      <div>
+        <h1 style={{ color: 'white' }}> Project Pool Base Data </h1>
+        <div>PoolID: {poolID} </div>
+        {poolBaseData.status &&
+          <>
+            <div>Pool Status: {poolBaseData.status}</div>
+            <div>Token Address: {poolBaseData.token1Address} </div>
+            <div>Main Address: {poolBaseData.token2Address} </div>
+            <div>Total Sale: {poolBaseData.totalSale} </div>
+            <div>Already Sale: {poolBaseData.alreadySale} </div>
+            <div>Sale Start: {convertUnixTime(poolBaseData.saleStart)} </div>
+            <div>Sale End: {convertUnixTime(poolBaseData.saleEnd)} </div>
+            <div>Vesting Schedule: {poolBaseData.vestingSchedule.map(item => convertUnixTime(item)).join(', ')} </div>
+            <div>Vesting Stage: {poolBaseData.vestingStage.join(', ')} </div>
+          </>
+        }
+
+      </div>
+
+
+      <div style={isShowingForm ? {} : { display: 'none' }}>
         <h1 style={{ color: 'white', marginTop: '1rem' }}>
           Step 1: Deploy ticket contract address / Approve Token{' '}
         </h1>
         <div className={styles.tokenApproval}>
           <div>
-            <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
+            <p style={{ margin: '1rem 0', fontSize: '16px', color: 'white' }}>
               Deploy token address
             </p>
             <div
@@ -540,7 +586,7 @@ const LaunchManager = props => {
             >
               Deploy
             </Button>
-            <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
+            <p style={{ margin: '1rem 0', fontSize: '16px', color: 'white' }}>
               Approve token address
             </p>
             <div
@@ -815,38 +861,21 @@ const LaunchManager = props => {
           <Button type="primary" style={{ marginTop: '1rem' }} onClick={createPoolClick}>
             Create
           </Button>
-          {totalPool && (
+          {totalPool &&
             <h3 style={{ fontWeight: '450', color: 'red', marginTop: '1rem', width: '100%' }}>
               Total Pool: {totalPool}
             </h3>
-          )}
+          }
+
           <h1 style={{ color: 'white', marginTop: '1rem' }}>
             Step 3: Create Pool Distribution (Vesting)
           </h1>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
-            <span
-              style={{ fontWeight: '700', marginRight: '1rem', alignSelf: 'center', width: '25%' }}
-            >
-              Pool ID
-            </span>
-            <Input
-              style={{ width: '80%' }}
-              id="0"
-              value={poolID}
-              onChange={e => setPoolID(e.target.value)}
-            />
-          </div>
-          {receivedData && (
-            <div>
+          {poolBaseData.vestingSchedule.length !== 0 ?
+            <>
+              <div>Already scheduled, Cannot Change! Recreate pool if need update.</div>
+            </>
+            :
+            <>
               <div
                 style={{
                   display: 'flex',
@@ -858,52 +887,78 @@ const LaunchManager = props => {
                 }}
               >
                 <span
-                  style={{
-                    fontWeight: '700',
-                    marginRight: '1rem',
-                    alignSelf: 'center',
-                    width: '25%',
-                  }}
+                  style={{ fontWeight: '700', marginRight: '1rem', alignSelf: 'center', width: '25%' }}
                 >
-                  Distribution Date
+                  Pool ID
                 </span>
                 <Input
                   style={{ width: '80%' }}
-                  id="1"
-                  value={distributionArrDate.length === 0 ? 0 : distributionArrDate}
-                  onChange={toTimestampArr}
+                  id="0"
+                  value={poolID}
                 />
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  width: '100%',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <span
-                  style={{
-                    fontWeight: '700',
-                    marginRight: '1rem',
-                    alignSelf: 'center',
-                    width: '25%',
-                  }}
-                >
-                  Distribution Percentage
-                </span>
-                <Input
-                  style={{ width: '80%' }}
-                  id="2"
-                  value={distributionPercentArr.length === 0 ? 0 : distributionPercentArr}
-                  onChange={poolDistributionChange}
-                />
-              </div>
-            </div>
-          )}
-          <Button type="primary" style={{ marginTop: '1rem' }} onClick={poolDistributionClick}>
-            Submit
-          </Button>
+              {receivedData && (
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: '100%',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '1rem',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: '700',
+                        marginRight: '1rem',
+                        alignSelf: 'center',
+                        width: '25%',
+                      }}
+                    >
+                      Distribution Date
+                    </span>
+                    <Input
+                      style={{ width: '80%' }}
+                      id="1"
+                      value={distributionArrDate.length === 0 ? 0 : distributionArrDate}
+                      onChange={toTimestampArr}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: '100%',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: '700',
+                        marginRight: '1rem',
+                        alignSelf: 'center',
+                        width: '25%',
+                      }}
+                    >
+                      Distribution Percentage
+                    </span>
+                    <Input
+                      style={{ width: '80%' }}
+                      id="2"
+                      value={distributionPercentArr.length === 0 ? 0 : distributionPercentArr}
+                      onChange={poolDistributionChange}
+                    />
+                  </div>
+                </div>
+              )}
+              <Button type="primary" style={{ marginTop: '1rem' }} onClick={poolDistributionClick}>
+                Submit
+              </Button>
+            </>
+          }
+
           <h1 style={{ color: 'white', marginTop: '1rem' }}>
             Step 4: Withdraw token & money raised (Vesting)
           </h1>
