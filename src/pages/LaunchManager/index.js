@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Select } from 'antd';
 import * as moment from 'moment';
+import Web3 from 'web3';
+import { ContractFactory } from 'ethers';
 import { history } from 'umi';
 import { ethers } from 'ethers';
 import styles from './styles.less';
@@ -9,75 +11,56 @@ import { getContract } from '../../acy-dex-swap/utils/index.js';
 import ERC20ABI from '../../abis/ERC20.json';
 import myAbi from '../../abis/pool.json';
 import myByteCode from './bytecode.json';
-import { hstAbi, hstByteCode } from '../../abis/constants.json';
+import { hstByteCode } from '../../abis/constants.json';
 import { useWeb3React } from '@web3-react/core';
 import POOLABI from '@/acy-dex-swap/abis/AcyV1Poolz.json';
-import { getProjects, getProjectInfo } from '@/services/api';
+import { getProjectInfo } from '@/services/api';
 import { LAUNCHPAD_ADDRESS, LAUNCH_RPC_URL, CHAINID, API_URL, TOKEN_LIST } from '@/constants';
 import { CustomError } from '@/acy-dex-swap/utils';
-import { BigNumber } from '@ethersproject/bignumber';
-import { ContractFactory } from 'ethers';
 import { useConnectWallet } from '@/components/ConnectWallet';
+import project from '@/models/project';
 
-const { Option } = Select;
+// variables
+// const BSC_testnet_PoolContract_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
+// const BSC_mainnet_PoolContract_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
 
-// TODO:
-// 1. 不要手动Connect Wallet，直接useEffect去抓
-// 2. Deploy Token之后，Address直接放过来，Approve Amount直接填非常大
-// 3. 所有依赖其他字段的值。都不可修改，视情况是否显示
+// testnet
+const poolchart_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
+// mainnet
+// const poolchart_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
 
-const BSC_testnet_PoolContract_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
-const BSC_mainnet_PoolContract_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
+
+let ethersProvider;
+let ethersSigner;
 
 const LaunchManager = props => {
   const [projectInfo, setProjectInfo] = useState({
     TotalProject: 0,
     ProjectID: null,
-    TokenDecimal: null,
+    TokenDecimal: 0,
     MainCoinDecimal: null,
     TokenAddress: null,
     MainCoinAddress: null,
-    resSwapRate: 0,
-    SwapType: 0,
+    resSwapRate: null,
+    SwapType: null,
   });
   const [totalPool, setTotalPool] = useState(0);
   const [poolID, setPoolID] = useState(null);
   const [claimPoolID, setClaimPoolID] = useState(null);
-  const [receivedData, setReceivedData] = useState();
+  const [receivedData, setReceivedData] = useState({});
   const [approveTokenAddress, setApproveTokenAddress] = useState(null);
-  const [approveAmount, setApproveAmount] = useState(0);
-  const [createPoolInfo, setCreatePoolInfo] = useState({});
-  const [distributionArr, setDistributionArr] = useState();
-  const [distributionPercentArr, setDistributionPercentArr] = useState();
+  const [approveAmount, setApproveAmount] = useState('0');
+  const [distributionArr, setDistributionArr] = useState([]);
+  const [distributionPercentArr, setDistributionPercentArr] = useState([]);
 
   // link to launch contract address
   const { account, chainId, library, activate, active } = useWeb3React();
-  const { ethereum } = window;
-  let ethersProvider;
-  let ethersSigner;
-  let userAddress;
-
-  const poolKeys = [
-    'Token',
-    'MainCoin',
-    'StartAmount',
-    'StartTime',
-    'EndTime',
-    'SwapRate',
-    'SwapType',
-  ];
 
   const formatTime = timeZone => {
     return moment(timeZone)
       .local()
       .format('MM/DD/YYYY HH:mm:ss');
   };
-
-  const onboardButton = document.getElementById('connectButton');
-  // const network = document.getElementById('network');
-  // const chainId = document.getElementById('chainId');
-  // const account = document.getElementById('accounts');
-  // const amount = document.getElementById('amount');
 
   const connectWalletByLocalStorage = useConnectWallet();
   useEffect(
@@ -90,155 +73,149 @@ const LaunchManager = props => {
   );
 
   useEffect(
-    () => {
-      getProjectInfo(API_URL(), projectInfo.ProjectID)
-        .then(res => {
-          if (res) {
-            // extract data from string
-            res['projectName'] = res.basicInfo.projectName;
-            res['saleStart'] = formatTime(res.scheduleInfo.saleStart);
-            res['saleEnd'] = formatTime(res.scheduleInfo.saleEnd);
-
-            res['tsSaleStart'] = BigInt(Date.parse(res['saleStart']) / 1000);
-            res['tsSaleEnd'] = BigInt(Date.parse(res['saleEnd']) / 1000);
-
-            if (res.saleInfo.tokenPrice < 1) setProjectInfo({ ...projectInfo, SwapType: 0 });
-            else setProjectInfo({ ...projectInfo, SwapType: 1 });
-
-            res['tokenPrice'] = res.saleInfo.tokenPrice;
-            res['totalSale'] = res.saleInfo.totalSale;
-            res['mainCoin'] = res.basicInfo.mainCoin;
-
-            // get state to hide graph and table
-            const mainCoinInfo = TOKEN_LIST().find(item => item.symbol === res.basicInfo.mainCoin);
-            setProjectInfo({ ...projectInfo, MainCoinDecimal: mainCoinInfo.decimals });
-            setProjectInfo({ ...projectInfo, MainCoinAddress: mainCoinInfo.address });
-
-            const fVestingDate = res.scheduleInfo.distributionData[1].map(item => BigInt(item));
-            const fVestingPercent = res.scheduleInfo.distributionData[2].map(item => BigInt(item));
-            console.log(fVestingDate, fVestingPercent);
-            setDistributionArr(fVestingDate);
-            setDistributionPercentArr(fVestingPercent);
-            console.log(distributionArr, distributionPercentArr);
-            setReceivedData(res);
-            console.log('RESULTTTTTTTTTT');
-            console.log(receivedData);
-          } else {
-            console.log('Invalid value');
+    async () => {
+      try {
+        if (projectInfo.TokenAddress !== null) {
+          let web3;
+          if (window.ethereum !== undefined) {
+            web3 = new Web3(window.ethereum);
           }
-        })
-        .catch(e => {
-          console.log('Project Detail check errrrrrrrrrrr', e);
-        });
+          const tokenContract = new web3.eth.Contract(ERC20ABI, projectInfo.TokenAddress);
+          const decimals = await tokenContract.methods.decimals().call();
+          setProjectInfo({ ...projectInfo, TokenDecimal: Number(decimals) });
+        }
+      } catch {
+        console.log('not valid token address');
+      }
     },
-    [projectInfo.ProjectID]
+    [projectInfo.TokenAddress]
   );
+
+  const getProjectData = (projectID) => {
+    if (!projectID) {
+      setReceivedData({});
+      return;
+    }
+
+    getProjectInfo(API_URL(), projectID)
+      .then(res => {
+        if (res) {
+          // extract data from string
+          res['projectName'] = res.basicInfo.projectName;
+          res['projectToken'] = res.basicInfo.projectToken;
+          res['poolID'] = res.basicInfo.poolID;
+
+          if (res.basicInfo.poolID <= totalPool) {
+            setPoolID(res.basicInfo.poolID);
+          }
+
+          res['saleStart'] = formatTime(res.scheduleInfo.saleStart);
+          res['saleEnd'] = formatTime(res.scheduleInfo.saleEnd);
+          res['tsSaleStart'] = BigInt(Date.parse(res['saleStart']) / 1000);
+          res['tsSaleEnd'] = BigInt(Date.parse(res['saleEnd']) / 1000);
+
+          res['tokenPrice'] = res.saleInfo.tokenPrice;
+          res['totalSale'] = res.saleInfo.totalSale;
+          res['totalRaise'] = res.saleInfo.totalRaise;
+          res['mainCoin'] = res.basicInfo.mainCoin;
+
+          setApproveAmount(res.saleInfo.totalSale);
+          // get state to hide graph and table
+          const mainCoinInfo = TOKEN_LIST().find(item => item.symbol === res.basicInfo.mainCoin);
+          console.log('mainCoinInfo', mainCoinInfo);
+
+          const checksummedAddress = Web3.utils.toChecksumAddress(mainCoinInfo.address)
+          setProjectInfo({
+            ...projectInfo,
+            MainCoinDecimal: mainCoinInfo.decimals,
+            MainCoinAddress: checksummedAddress,
+          });
+
+          const fVestingDate = res.scheduleInfo.distributionData[1].map(item => BigInt(item));
+          const fVestingPercent = res.scheduleInfo.distributionData[2].map(item => BigInt(item));
+          console.log(fVestingDate, fVestingPercent);
+          setDistributionArr(fVestingDate);
+          setDistributionPercentArr(fVestingPercent);
+          setReceivedData(res);
+        } else {
+          console.log('Invalid value');
+        }
+      })
+      .catch(e => {
+        console.log('Project Detail check errrrrrrrrrrr', e);
+      });
+  }
 
   useEffect(
     () => {
-      if (receivedData && receivedData.tokenPrice < 1) {
-        const temp =
-          Math.floor(((1 * 10 ** projectInfo.MainCoinDecimal) / receivedData.tokenPrice) *
-            10 ** projectInfo.TokenDecimal);
-        setProjectInfo({ ...projectInfo, resSwapRate: temp });
-      }
-      if (receivedData && receivedData.tokenPrice > 1) {
-        const temp =
-          Math.floor(((receivedData.tokenPrice * 10 ** projectInfo.TokenDecimal) / 1) *
-            10 ** projectInfo.MainCoinDecimal);
-        setProjectInfo({ ...projectInfo, resSwapRate: temp });
-      }
-    },
-    [projectInfo.TokenDecimal]
-  );
+      console.log('calc swap rate');
+      console.log(projectInfo);
 
-  // useEffect(
-  //   async () => {
-  //     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
-  //     const res = await poolContract.poolsCount();
-  //     console.log('total pools', res);
-  //     setTotalPool(res);
-  //   },
-  //   []
-  // );
+      if (receivedData) {
+        let swapRate = (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal) / (receivedData.totalSale * 10 ** projectInfo.TokenDecimal);
+        console.log('swapRate', swapRate);
+
+        if (swapRate >= 1) {
+          setProjectInfo({ ...projectInfo, SwapType: 1, resSwapRate: Math.round(swapRate) });
+        } else {
+          swapRate = (receivedData.totalSale * 10 ** projectInfo.TokenDecimal) / (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal);
+          setProjectInfo({ ...projectInfo, SwapType: 0, resSwapRate: Math.round(swapRate) });
+        }
+      }
+    }, [projectInfo.TokenDecimal])
 
   useEffect(async () => {
-    const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
-    const res = await poolContract.poolsCount();
-    const poolCounts = Number(res.toString());
-    setTotalPool(poolCounts);
-    setPoolID(poolCounts - 1);
-  }, [])
-
-  // const onboardButton = document.getElementById('connectButton');
-  // const network = document.getElementById('network');
-  // // const chainId = document.getElementById('chainId');
-  // const account = document.getElementById('accounts');
-  // const amount = document.getElementById('amount');
-
-  const createPoolChange = e => {
     try {
-      const bigIntIDs = [2, 5, 6];
-      const addressIDs = [0, 1];
-      const id = Number(e.target.id);
-      const value = e.target.value;
-      const res = bigIntIDs.includes(id)
-        ? BigInt(value)
-        : addressIDs.includes(id)
-          ? ethers.utils.getAddress(value)
-          : value;
-      const timeOut = setTimeout(() => {
-        setCreatePoolInfo({ ...createPoolInfo, [poolKeys[id]]: res });
-      }, 500);
-      return () => clearTimeout(timeOut);
-    } catch {
-      console.log('wrong format');
+      const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+      const res = await poolContract.poolsCount();
+      const poolCounts = Number(res.toString());
+      setTotalPool(poolCounts);
     }
-  };
+    catch {
+      console.log("Unable to retrive pool")
+    }
+  }, []);
 
-  const onClickConnect = async () => {
+  /* const onClickConnect = async () => {
     try {
-      console.log("CLIck", web3)
+      console.log('CLIck', web3);
+      let ethereum = window.ethereum;
 
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
       const chainIds = await ethereum.request({
         method: 'eth_chainId',
-      })
+      });
 
       const networkId = await ethereum.request({
         method: 'net_version',
-      })
+      });
 
       network.innerHTML = networkId;
       account.innerHTML = accounts;
       chainId.innerHTML = chainIds;
-      userAddress = accounts;
     } catch (error) {
       console.error(error);
     }
-  };
+  }; */
 
   const onClickApprove = async () => {
-    let approveAdd = document.getElementById('approveAdd');
-    let approveAmo = document.getElementById('approveAmo');
-    console.log('approveClick', approveAdd.value, approveAmo.value);
-
     ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
     ethersSigner = ethersProvider.getSigner();
     console.log(ethersSigner);
-    const tokenContract = new ethers.Contract(approveAdd.value, ERC20ABI, ethersSigner);
+    const tokenContract = new ethers.Contract(approveTokenAddress, ERC20ABI, ethersSigner);
     console.log('the contract information is ', tokenContract);
 
     // const timer = 10**decimal*approveAmo.value;
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     const decimal = await tokenContract.decimals().then(res => {
       console.log('d is ', res, accounts);
       return res;
     });
-    const amountBig = BigInt(9999999999999999999999999999);
+    const amountBig = BigInt(approveAmount) * BigInt(10 ** decimal);
+    console.log('AmountBig', amountBig);
 
     const result = await tokenContract.approve(
-      BSC_testnet_PoolContract_address,
+      poolchart_address,
       amountBig.toString(),
       {
         gasLimit: 60000,
@@ -247,7 +224,7 @@ const LaunchManager = props => {
     console.log('result is', result);
 
     const allowance = await tokenContract
-      .allowance(accounts[0], BSC_testnet_PoolContract_address)
+      .allowance(accounts[0], poolchart_address)
       .catch(e => {
         console.log('err', e, accounts);
       });
@@ -255,14 +232,6 @@ const LaunchManager = props => {
   };
 
   const onClickDeployToken = async () => {
-    // const ticketContract = await hre.ethers.getContractFactory("Greeter");
-    // const ticket = await ticketContract.deploy(createContractInfo.ProjectName,
-    //   createContractInfo.ProjectToken,
-    //   createContractInfo.TokenDecimal,
-    //   createContractInfo.TotalToken,
-    // );
-    // await ticket.deployed();
-    // console.log("Ticket Contract deployed to:", ticket.address);
     console.log('Deploying Token', ethers);
 
     const _initialAmount = document.getElementById('3').value;
@@ -286,7 +255,8 @@ const LaunchManager = props => {
       if (contract.address === undefined) {
         return undefined;
       }
-      setProjectInfo({ ...projectInfo, TokenAddress: contract.address })
+      setProjectInfo({ ...projectInfo, TokenAddress: contract.address });
+      setApproveTokenAddress(contract.address);
       console.log(
         `Contract mined! address: ${contract.address} transactionHash: ${contract.transactionHash}`
       );
@@ -302,17 +272,6 @@ const LaunchManager = props => {
       setDistributionPercentArr([...arr]);
     }, 500);
     return () => clearTimeout(timeOut);
-  };
-
-  const toTimestamp = e => {
-    const id = Number(e.target.id);
-    const value = e.target.value;
-    try {
-      const dt = BigInt(Date.parse(value) / 1000);
-      setCreatePoolInfo({ ...createPoolInfo, [poolKeys[id]]: dt });
-    } catch {
-      console.log('wrong format');
-    }
   };
 
   const toTimestampArr = e => {
@@ -331,16 +290,33 @@ const LaunchManager = props => {
   const createPoolClick = async () => {
     console.log('Creating pool');
     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
+    console.log('projectInfo', projectInfo);
+    const createPoolInfo = {
+      TokenAddress: ethers.utils.getAddress(projectInfo.TokenAddress),
+      MainCoinAddress: ethers.utils.getAddress(projectInfo.MainCoinAddress),
+      StartAmount: BigInt(receivedData.totalSale) * BigInt(10 ** projectInfo.TokenDecimal),
+      StartTime: receivedData.tsSaleStart,
+      EndTime: receivedData.tsSaleEnd,
+      SwapRate: BigInt(projectInfo.resSwapRate),
+      SwapType: BigInt(projectInfo.SwapType),
+    };
+    console.log('createPoolInfo', createPoolInfo);
+
     const result = await poolContract.CreatePool(
-      ethers.utils.getAddress(projectInfo.TokenAddress),
-      ethers.utils.getAddress(projectInfo.MainCoinAddress),
-      BigInt(receivedData.totalSale * (10 ** projectInfo.TokenDecimal)),
-      receivedData.tsSaleStart,
-      receivedData.tsSaleEnd,
-      BigInt(projectInfo.resSwapRate),
-      BigInt(projectInfo.SwapType)
+      createPoolInfo.TokenAddress,
+      createPoolInfo.MainCoinAddress,
+      createPoolInfo.StartAmount,
+      createPoolInfo.StartTime,
+      createPoolInfo.EndTime,
+      createPoolInfo.SwapRate,
+      createPoolInfo.SwapType
     );
     console.log('create pool result', result);
+
+    const res = await poolContract.poolsCount();
+    const poolCounts = Number(res.toString());
+    setPoolID(poolID + 1);
+    setTotalPool(poolCounts + 1);
   };
 
   // const contractInfoChange = (e) => {
@@ -354,13 +330,17 @@ const LaunchManager = props => {
 
   const poolDistributionClick = async () => {
     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
-    const result = await poolContract.UpdatePoolDistribution(BigInt(poolID), distributionArr, distributionPercentArr);
+    const result = await poolContract.UpdatePoolDistribution(
+      BigInt(poolID),
+      distributionArr,
+      distributionPercentArr
+    );
     console.log('pool distribution result', result);
   };
 
   const vestingClaimClicked = async () => {
     const poolContract = getContract(LAUNCHPAD_ADDRESS(), POOLABI, library, account);
-    const result = await poolContract.WithdrawERC20ToCreator(claimPoolID);
+    const result = await poolContract.WithdrawERC20ToCreator(account, claimPoolID);
     console.log('Token & Money Raised claimed: ', result);
   };
 
@@ -369,6 +349,11 @@ const LaunchManager = props => {
     console.log(projectInfo.ProjectID);
   };
 
+  const onBlurProjectID = (e) => {
+    let projectID = e.target.value;
+    getProjectData(projectID);
+  }
+
   return (
     <div className={styles.launchManagerRoot}>
       <h1 style={{ color: 'white' }}> Enter Project ID </h1>
@@ -376,187 +361,179 @@ const LaunchManager = props => {
         placeholder="Project ID"
         style={{ marginBottom: '1rem', width: '50%' }}
         onChange={handleValueChose}
+        onBlur={onBlurProjectID}
       />
-      {receivedData &&
+      {receivedData && (
         <>
           <h1 style={{ color: 'white' }}> ProjectInfo </h1>
           <div>Project Name: {receivedData.projectName}</div>
         </>
-      }
+      )}
 
-      <h1 style={{ color: 'white' }}> Step 1: Approve token / Create ticket contract address </h1>
-      <Button type="primary" id="connectButton" className={styles.connectButton}>
-        ConnectMetaMask
-      </Button>
-      <section>
-        <h3 style={{ color: 'white' }}>Status</h3>
-        <div className="row">
-          <div className="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 tx-black">
-            <p className="info-text alert alert-primary">
-              Network: <span id="network" />
+      <div style={projectInfo.ProjectID ? {} : { display: 'none' }}>
+        <h1 style={{ color: 'white', marginTop: '1rem' }}> Step 1: Deploy ticket contract address / Approve Token </h1>
+        <div className={styles.tokenApproval}>
+          <div>
+            <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
+              Deploy token address
             </p>
-          </div>
-          <div className="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
-            <p className="info-text alert alert-secondary">
-              ChainId: <span id="chainId" />
+            <Input placeholder="Project Name" id="0" value={receivedData.projectName + " Ticket"} />
+            <Input style={{ marginTop: '1rem' }} id="1" placeholder="Project Token" value={receivedData.projectToken + "TIK"} />
+            <Input style={{ marginTop: '1rem' }} id="2" placeholder="Token Decimal" value={18} />
+            <Input style={{ marginTop: '1rem' }} id="3" placeholder="Total Sale" value={receivedData.totalSale} />
+            <Button
+              id="deployButton"
+              type="primary"
+              style={{ marginTop: '1rem', marginLeft: '5px' }}
+              onClick={onClickDeployToken}
+            >
+              Deploy
+            </Button>
+            <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
+              Approve token address
             </p>
+            <Input
+              id="approveAdd"
+              placeholder="Token Address"
+              value={approveTokenAddress}
+              onChange={e => {
+                setApproveTokenAddress(e.target.value);
+                setProjectInfo({ ...projectInfo, TokenAddress: e.target.value });
+              }}
+            />
+            <Input
+              id="approveAmo"
+              style={{ marginTop: '1rem' }}
+              placeholder="Approve Amount"
+              value={approveAmount}
+              onChange={e => setApproveAmount(BigInt(e.target.value))}
+            />
+            <Button
+              id="approveButton"
+              type="primary"
+              style={{ marginTop: '1rem', marginLeft: '5px' }}
+              onClick={onClickApprove}
+            >
+              Submit
+            </Button>
           </div>
-          <div className="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
-            <p className="info-text alert alert-success">
-              Accounts: <span id="accounts" />
-            </p>
-          </div>
-          <div className="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
-            <p className="info-text alert alert-success">
-              ApproveAmount: <span id="amount" />
-            </p>
-          </div>
-        </div>
-      </section>
-      <div className={styles.tokenApproval}>
-        <div>
-          <h3 style={{ color: 'white' }}>Step 1: Approve token</h3>
-          <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
-            Deploy token address
-          </p>
-          <Input placeholder="Project Name" id="0" />
-          <Input style={{ marginTop: '1rem' }} id="1" placeholder="Project Token" />
-          <Input style={{ marginTop: '1rem' }} id="2" placeholder="Token Decimal" />
-          <Input style={{ marginTop: '1rem' }} id="3" placeholder="Total token volume" />
+          <h1 style={{ color: 'white', marginTop: '1rem' }}> Step 2: Create Pool </h1>
+          {receivedData && (
+            <div>
+              <Input
+                placeholder="_Token Address"
+                id="0"
+                value={projectInfo.TokenAddress === null ? 'NULL' : projectInfo.TokenAddress}
+                onChange={e => setProjectInfo({ ...projectInfo, TokenAddress: e.target.value })}
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="_MainCoin Address"
+                id="1"
+                value={projectInfo.MainCoinAddress === null ? 'NULL' : projectInfo.MainCoinAddress}
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="_StartAmount"
+                id="2"
+                value={receivedData.totalSale ? receivedData.totalSale : 0}
+                onChange={e =>
+                  setReceivedData({ ...receivedData, totalSale: BigInt(e.target.value) })
+                }
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="Start Date (Input Date - MM/DD/YYYY HH:MM:SS)"
+                id="3"
+                value={receivedData.tsSaleStart ? receivedData.tsSaleStart.toString() : 0}
+                onChange={e =>
+                  setReceivedData({ ...receivedData, tsSaleStart: BigInt(e.target.value) })
+                }
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="End Date (Input Date - MM/DD/YYYY HH:MM:SS)"
+                id="4"
+                value={receivedData.tsSaleEnd ? receivedData.tsSaleEnd.toString() : 0}
+                onChange={e =>
+                  setReceivedData({ ...receivedData, tsSaleEnd: BigInt(e.target.value) })
+                }
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="_SwapRate"
+                id="5"
+                value={projectInfo.resSwapRate}
+                onChange={e =>
+                  setProjectInfo({ ...projectInfo, resSwapRate: BigInt(e.target.value) })
+                }
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="_SwapType"
+                id="6"
+                value={projectInfo.SwapType === 0 ? 0 : projectInfo.SwapType}
+              />
+            </div>
+          )}
           <Button
-            id="deployButton"
             type="primary"
             style={{ marginTop: '1rem', marginLeft: '5px' }}
-            onClick={onClickDeployToken}
+            onClick={createPoolClick}
           >
-            Deploy
+            Create
           </Button>
-          <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
-            Approve token address
-          </p>
+          {totalPool &&
+            <h3 style={{ fontWeight: '450', color: 'red', marginTop: '1rem', width: '100%' }}>
+              Total Pool: {totalPool}
+            </h3>
+          }
+          <h1 style={{ color: 'white', marginTop: '1rem' }}>
+            Step 3: Create Pool Distribution (Vesting)
+          </h1>
           <Input
-            id="approveAdd"
-            placeholder="Token Address"
-            value={projectInfo.TokenAddress === null ? 'NULL' : projectInfo.TokenAddress}
-            onChange={e => setApproveTokenAddress(e)}
+            placeholder="Pool ID"
+            id="0"
+            value={poolID}
+            onChange={e => setPoolID(e.target.value)}
           />
-          <Input
-            id="approveAmo"
-            style={{ marginTop: '1rem' }}
-            placeholder="Approve Amount"
-            value='9999999999999999999999999'
-            onChange={e => setApproveAmount(e)}
-          />
+          {receivedData && (
+            <div>
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="Distribution time"
+                id="1"
+                value={distributionArr.length === 0 ? 0 : distributionArr}
+                onChange={toTimestampArr}
+              />
+              <Input
+                style={{ marginTop: '1rem' }}
+                placeholder="Distribution percentage"
+                id="2"
+                value={distributionPercentArr.length === 0 ? 0 : distributionPercentArr}
+                onChange={poolDistributionChange}
+              />
+            </div>
+          )}
           <Button
-            id="approveButton"
             type="primary"
             style={{ marginTop: '1rem', marginLeft: '5px' }}
-            onClick={onClickApprove}
+            onClick={poolDistributionClick}
           >
             Submit
           </Button>
+          <h1 style={{ color: 'white', marginTop: '1rem' }}>
+            Step 4: Withdraw token & money raised (Vesting)
+          </h1>
+          <Input placeholder="Pool ID" value={poolID} />
+          <Button
+            type="primary"
+            style={{ marginTop: '1rem', marginLeft: '5px' }}
+            onClick={vestingClaimClicked}
+          >
+            Claim
+          </Button>
         </div>
-        <h1 style={{ color: 'white', marginTop: '1rem' }}> Step 2: Create Pool </h1>
-        {receivedData && (
-          <div>
-            <Input
-              placeholder="_Token Address"
-              id="0"
-              value={projectInfo.TokenAddress === null ? 'NULL' : projectInfo.TokenAddress}
-              onChange={createPoolChange}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="_MainCoin Address"
-              id="1"
-              value={projectInfo.MainCoinAddress === null ? 'NULL' : projectInfo.MainCoinAddress}
-              onChange={createPoolChange}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="_StartAmount"
-              id="2"
-              value={receivedData.totalSale ? receivedData.totalSale : 0}
-              onChange={createPoolChange}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="Start Date (输入日期 - 月/日/年 小时, 分钟, 秒)"
-              id="3"
-              value={receivedData.tsSaleStart ? receivedData.tsSaleStart.toString() : 0}
-              onChange={createPoolChange}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="End Date (输入日期 - 月/日/年 小时, 分钟, 秒)"
-              id="4"
-              value={receivedData.tsSaleEnd ? receivedData.tsSaleEnd.toString() : 0}
-              onChange={createPoolChange}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="_SwapRate"
-              id="5"
-              value={projectInfo.resSwapRate === 0 ? 0 : projectInfo.resSwapRate}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="_SwapType"
-              id="6"
-              value={projectInfo.SwapType === 0 ? 0 : projectInfo.SwapType}
-            />
-          </div>
-        )}
-        <Button
-          type="primary"
-          style={{ marginTop: '1rem', marginLeft: '5px' }}
-          onClick={createPoolClick}
-        >
-          Create
-        </Button>
-        <h3 style={{ fontWeight: '450', color: 'red', marginTop: '1rem', width: '100%' }}>
-          Total Pool: {totalPool}
-        </h3>
-        <h1 style={{ color: 'white', marginTop: '1rem' }}>
-          Step 3: Create Pool Distribution (Vesting)
-        </h1>
-        <Input placeholder="Pool ID" id="0" value={poolID} onChange={e => setPoolID(e.target.value)} />
-        {receivedData && (
-          <div>
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="Distribution time"
-              id="1"
-              value={distributionArr.length === 0 ? 0 : distributionArr}
-              onChange={toTimestampArr}
-            />
-            <Input
-              style={{ marginTop: '1rem' }}
-              placeholder="Distribution percentage"
-              id="2"
-              value={distributionPercentArr.length === 0 ? 0 : distributionPercentArr}
-              onChange={poolDistributionChange}
-            />
-          </div>
-        )}
-        <Button
-          type="primary"
-          style={{ marginTop: '1rem', marginLeft: '5px' }}
-          onClick={poolDistributionClick}
-        >
-          Submit
-        </Button>
-        <h1 style={{ color: 'white', marginTop: '1rem' }}>
-          Step 4: Withdraw token & money raised (Vesting)
-        </h1>
-        <Input placeholder="Pool ID" id="0" onChange={e => setClaimPoolID(e.target.value)} />
-        <Button
-          type="primary"
-          style={{ marginTop: '1rem', marginLeft: '5px' }}
-          onClick={vestingClaimClicked}
-        >
-          Claim
-        </Button>
       </div>
     </div>
   );
