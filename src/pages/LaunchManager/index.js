@@ -29,7 +29,6 @@ const poolchart_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
 // mainnet
 // const poolchart_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
 
-
 let ethersProvider;
 let ethersSigner;
 
@@ -50,8 +49,10 @@ const LaunchManager = props => {
   const [receivedData, setReceivedData] = useState({});
   const [approveTokenAddress, setApproveTokenAddress] = useState(null);
   const [approveAmount, setApproveAmount] = useState('0');
-  const [distributionArr, setDistributionArr] = useState([]);
   const [distributionPercentArr, setDistributionPercentArr] = useState([]);
+  const [distributionArr, setDistributionArr] = useState([]);
+  const [distributionArrDate, setDistributionArrDate] = useState([]);
+  
 
   // link to launch contract address
   const { account, chainId, library, activate, active } = useWeb3React();
@@ -91,7 +92,7 @@ const LaunchManager = props => {
     [projectInfo.TokenAddress]
   );
 
-  const getProjectData = (projectID) => {
+  const getProjectData = projectID => {
     if (!projectID) {
       setReceivedData({});
       return;
@@ -109,8 +110,8 @@ const LaunchManager = props => {
             setPoolID(res.basicInfo.poolID);
           }
 
-          res['saleStart'] = formatTime(res.scheduleInfo.saleStart);
-          res['saleEnd'] = formatTime(res.scheduleInfo.saleEnd);
+          res['saleStart'] = res.scheduleInfo.saleStart;
+          res['saleEnd'] = res.scheduleInfo.saleEnd;
           res['tsSaleStart'] = BigInt(Date.parse(res['saleStart']) / 1000);
           res['tsSaleEnd'] = BigInt(Date.parse(res['saleEnd']) / 1000);
 
@@ -124,7 +125,7 @@ const LaunchManager = props => {
           const mainCoinInfo = TOKEN_LIST().find(item => item.symbol === res.basicInfo.mainCoin);
           console.log('mainCoinInfo', mainCoinInfo);
 
-          const checksummedAddress = Web3.utils.toChecksumAddress(mainCoinInfo.address)
+          const checksummedAddress = Web3.utils.toChecksumAddress(mainCoinInfo.address);
           setProjectInfo({
             ...projectInfo,
             MainCoinDecimal: mainCoinInfo.decimals,
@@ -132,9 +133,11 @@ const LaunchManager = props => {
           });
 
           const fVestingDate = res.scheduleInfo.distributionData[1].map(item => BigInt(item));
+          const allVestingDate =  res.scheduleInfo.distributionData[1].map(item => new Date(Number(item) * 1000).toUTCString());
           const fVestingPercent = res.scheduleInfo.distributionData[2].map(item => BigInt(item));
           console.log(fVestingDate, fVestingPercent);
           setDistributionArr(fVestingDate);
+          setDistributionArrDate(allVestingDate);
           setDistributionPercentArr(fVestingPercent);
           setReceivedData(res);
         } else {
@@ -144,7 +147,7 @@ const LaunchManager = props => {
       .catch(e => {
         console.log('Project Detail check errrrrrrrrrrr', e);
       });
-  }
+  };
 
   useEffect(
     () => {
@@ -152,17 +155,23 @@ const LaunchManager = props => {
       console.log(projectInfo);
 
       if (receivedData) {
-        let swapRate = (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal) / (receivedData.totalSale * 10 ** projectInfo.TokenDecimal);
+        let swapRate =
+          (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal) /
+          (receivedData.totalSale * 10 ** projectInfo.TokenDecimal);
         console.log('swapRate', swapRate);
 
         if (swapRate >= 1) {
           setProjectInfo({ ...projectInfo, SwapType: 1, resSwapRate: Math.round(swapRate) });
         } else {
-          swapRate = (receivedData.totalSale * 10 ** projectInfo.TokenDecimal) / (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal);
+          swapRate =
+            (receivedData.totalSale * 10 ** projectInfo.TokenDecimal) /
+            (receivedData.totalRaise * 10 ** projectInfo.MainCoinDecimal);
           setProjectInfo({ ...projectInfo, SwapType: 0, resSwapRate: Math.round(swapRate) });
         }
       }
-    }, [projectInfo.TokenDecimal])
+    },
+    [projectInfo.TokenDecimal]
+  );
 
   useEffect(async () => {
     try {
@@ -170,33 +179,10 @@ const LaunchManager = props => {
       const res = await poolContract.poolsCount();
       const poolCounts = Number(res.toString());
       setTotalPool(poolCounts);
-    }
-    catch {
-      console.log("Unable to retrive pool")
+    } catch {
+      console.log('Unable to retrive pool');
     }
   }, []);
-
-  /* const onClickConnect = async () => {
-    try {
-      console.log('CLIck', web3);
-      let ethereum = window.ethereum;
-
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      const chainIds = await ethereum.request({
-        method: 'eth_chainId',
-      });
-
-      const networkId = await ethereum.request({
-        method: 'net_version',
-      });
-
-      network.innerHTML = networkId;
-      account.innerHTML = accounts;
-      chainId.innerHTML = chainIds;
-    } catch (error) {
-      console.error(error);
-    }
-  }; */
 
   const onClickApprove = async () => {
     ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
@@ -214,20 +200,14 @@ const LaunchManager = props => {
     const amountBig = BigInt(approveAmount) * BigInt(10 ** decimal);
     console.log('AmountBig', amountBig);
 
-    const result = await tokenContract.approve(
-      poolchart_address,
-      amountBig.toString(),
-      {
-        gasLimit: 60000,
-      }
-    );
+    const result = await tokenContract.approve(poolchart_address, amountBig.toString(), {
+      gasLimit: 60000,
+    });
     console.log('result is', result);
 
-    const allowance = await tokenContract
-      .allowance(accounts[0], poolchart_address)
-      .catch(e => {
-        console.log('err', e, accounts);
-      });
+    const allowance = await tokenContract.allowance(accounts[0], poolchart_address).catch(e => {
+      console.log('err', e, accounts);
+    });
     console.log('allowance is ', allowance, await tokenContract.symbol());
   };
 
@@ -349,10 +329,10 @@ const LaunchManager = props => {
     console.log(projectInfo.ProjectID);
   };
 
-  const onBlurProjectID = (e) => {
+  const onBlurProjectID = e => {
     let projectID = e.target.value;
     getProjectData(projectID);
-  }
+  };
 
   return (
     <div className={styles.launchManagerRoot}>
@@ -371,20 +351,116 @@ const LaunchManager = props => {
       )}
 
       <div style={projectInfo.ProjectID ? {} : { display: 'none' }}>
-        <h1 style={{ color: 'white', marginTop: '1rem' }}> Step 1: Deploy ticket contract address / Approve Token </h1>
+        <h1 style={{ color: 'white', marginTop: '1rem' }}>
+          Step 1: Deploy ticket contract address / Approve Token{' '}
+        </h1>
         <div className={styles.tokenApproval}>
           <div>
             <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
               Deploy token address
             </p>
-            <Input placeholder="Project Name" id="0" value={receivedData.projectName + " Ticket"} />
-            <Input style={{ marginTop: '1rem' }} id="1" placeholder="Project Token" value={receivedData.projectToken + "TIK"} />
-            <Input style={{ marginTop: '1rem' }} id="2" placeholder="Token Decimal" value={18} />
-            <Input style={{ marginTop: '1rem' }} id="3" placeholder="Total Sale" value={receivedData.totalSale} />
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: '700',
+                  marginRight: '1rem',
+                  alignSelf: 'center',
+                  width: '25%',
+                }}
+              >
+                Project Name
+              </span>
+              <Input style={{ width: '80%' }} id="0" value={receivedData.projectName + ' Ticket'} />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: '700',
+                  marginRight: '1rem',
+                  alignSelf: 'center',
+                  width: '25%',
+                }}
+              >
+                Token Symbol
+              </span>
+              <Input
+                style={{ width: '80%' }}
+                id="1"
+                placeholder="Project Token"
+                value={receivedData.projectToken + 'TIK'}
+              />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: '700',
+                  marginRight: '1rem',
+                  alignSelf: 'center',
+                  width: '25%',
+                }}
+              >
+                Token Decimal
+              </span>
+              <Input style={{ width: '80%' }} id="2" value={18} />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: '700',
+                  marginRight: '1rem',
+                  alignSelf: 'center',
+                  width: '25%',
+                }}
+              >
+                Total Sale
+              </span>
+              <Input
+                style={{ width: '80%' }}
+                id="3"
+                placeholder="Total Sale"
+                value={receivedData.totalSale}
+              />
+            </div>
             <Button
               id="deployButton"
               type="primary"
-              style={{ marginTop: '1rem', marginLeft: '5px' }}
+              style={{ marginTop: '1rem' }}
               onClick={onClickDeployToken}
             >
               Deploy
@@ -392,26 +468,67 @@ const LaunchManager = props => {
             <p style={{ margin: '1rem 0', fontWeight: '500', fontSize: '15px' }}>
               Approve token address
             </p>
-            <Input
-              id="approveAdd"
-              placeholder="Token Address"
-              value={approveTokenAddress}
-              onChange={e => {
-                setApproveTokenAddress(e.target.value);
-                setProjectInfo({ ...projectInfo, TokenAddress: e.target.value });
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
               }}
-            />
-            <Input
-              id="approveAmo"
-              style={{ marginTop: '1rem' }}
-              placeholder="Approve Amount"
-              value={approveAmount}
-              onChange={e => setApproveAmount(BigInt(e.target.value))}
-            />
+            >
+              <span
+                style={{
+                  fontWeight: '700',
+                  marginRight: '1rem',
+                  alignSelf: 'center',
+                  width: '25%',
+                }}
+              >
+                Token Address
+              </span>
+              <Input
+                style={{ width: '80%' }}
+                id="approveAdd"
+                value={approveTokenAddress}
+                onChange={e => {
+                  setApproveTokenAddress(e.target.value);
+                  setProjectInfo({ ...projectInfo, TokenAddress: e.target.value });
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: '700',
+                  marginRight: '1rem',
+                  alignSelf: 'center',
+                  width: '25%',
+                }}
+              >
+                Approve Amount
+              </span>
+              <Input
+                style={{ width: '80%' }}
+                id="approveAmo"
+                value={approveAmount}
+                onChange={e => setApproveAmount(BigInt(e.target.value))}
+              />
+            </div>
             <Button
               id="approveButton"
               type="primary"
-              style={{ marginTop: '1rem', marginLeft: '5px' }}
+              style={{ marginTop: '1rem' }}
               onClick={onClickApprove}
             >
               Submit
@@ -420,117 +537,315 @@ const LaunchManager = props => {
           <h1 style={{ color: 'white', marginTop: '1rem' }}> Step 2: Create Pool </h1>
           {receivedData && (
             <div>
-              <Input
-                placeholder="_Token Address"
-                id="0"
-                value={projectInfo.TokenAddress === null ? 'NULL' : projectInfo.TokenAddress}
-                onChange={e => setProjectInfo({ ...projectInfo, TokenAddress: e.target.value })}
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="_MainCoin Address"
-                id="1"
-                value={projectInfo.MainCoinAddress === null ? 'NULL' : projectInfo.MainCoinAddress}
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="_StartAmount"
-                id="2"
-                value={receivedData.totalSale ? receivedData.totalSale : 0}
-                onChange={e =>
-                  setReceivedData({ ...receivedData, totalSale: BigInt(e.target.value) })
-                }
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="Start Date (Input Date - MM/DD/YYYY HH:MM:SS)"
-                id="3"
-                value={receivedData.tsSaleStart ? receivedData.tsSaleStart.toString() : 0}
-                onChange={e =>
-                  setReceivedData({ ...receivedData, tsSaleStart: BigInt(e.target.value) })
-                }
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="End Date (Input Date - MM/DD/YYYY HH:MM:SS)"
-                id="4"
-                value={receivedData.tsSaleEnd ? receivedData.tsSaleEnd.toString() : 0}
-                onChange={e =>
-                  setReceivedData({ ...receivedData, tsSaleEnd: BigInt(e.target.value) })
-                }
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="_SwapRate"
-                id="5"
-                value={projectInfo.resSwapRate}
-                onChange={e =>
-                  setProjectInfo({ ...projectInfo, resSwapRate: BigInt(e.target.value) })
-                }
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="_SwapType"
-                id="6"
-                value={projectInfo.SwapType === 0 ? 0 : projectInfo.SwapType}
-              />
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  Token Address
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="0"
+                  value={projectInfo.TokenAddress === null ? 'NULL' : projectInfo.TokenAddress}
+                  onChange={e => setProjectInfo({ ...projectInfo, TokenAddress: e.target.value })}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  MainCoin Address
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="1"
+                  value={
+                    projectInfo.MainCoinAddress === null ? 'NULL' : projectInfo.MainCoinAddress
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  StartAmount
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="2"
+                  value={receivedData.totalSale ? receivedData.totalSale : 0}
+                  onChange={e =>
+                    setReceivedData({ ...receivedData, totalSale: BigInt(e.target.value) })
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  Start Date
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="3"
+                  value={receivedData.tsSaleStart ? new Date(receivedData.saleStart.toString()).toUTCString() : 0}
+                  onChange={e =>
+                    setReceivedData({ ...receivedData, tsSaleStart: BigInt(e.target.value) })
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  End Date
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="4"
+                  value={receivedData.tsSaleEnd ? new Date(receivedData.saleEnd.toString()).toUTCString() : 0}
+                  onChange={e =>
+                    setReceivedData({ ...receivedData, tsSaleEnd: BigInt(e.target.value) })
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  SwapRate
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="5"
+                  value={projectInfo.resSwapRate}
+                  onChange={e =>
+                    setProjectInfo({ ...projectInfo, resSwapRate: BigInt(e.target.value) })
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  SwapType
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  placeholder="_SwapType"
+                  id="6"
+                  value={projectInfo.SwapType === 0 ? 0 : projectInfo.SwapType}
+                />
+              </div>
             </div>
           )}
-          <Button
-            type="primary"
-            style={{ marginTop: '1rem', marginLeft: '5px' }}
-            onClick={createPoolClick}
-          >
+          <Button type="primary" style={{ marginTop: '1rem' }} onClick={createPoolClick}>
             Create
           </Button>
-          {totalPool &&
+          {totalPool && (
             <h3 style={{ fontWeight: '450', color: 'red', marginTop: '1rem', width: '100%' }}>
               Total Pool: {totalPool}
             </h3>
-          }
+          )}
           <h1 style={{ color: 'white', marginTop: '1rem' }}>
             Step 3: Create Pool Distribution (Vesting)
           </h1>
-          <Input
-            placeholder="Pool ID"
-            id="0"
-            value={poolID}
-            onChange={e => setPoolID(e.target.value)}
-          />
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1rem',
+            }}
+          >
+            <span
+              style={{ fontWeight: '700', marginRight: '1rem', alignSelf: 'center', width: '25%' }}
+            >
+              Pool ID
+            </span>
+            <Input
+              style={{ width: '80%' }}
+              id="0"
+              value={poolID}
+              onChange={e => setPoolID(e.target.value)}
+            />
+          </div>
           {receivedData && (
             <div>
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="Distribution time"
-                id="1"
-                value={distributionArr.length === 0 ? 0 : distributionArr}
-                onChange={toTimestampArr}
-              />
-              <Input
-                style={{ marginTop: '1rem' }}
-                placeholder="Distribution percentage"
-                id="2"
-                value={distributionPercentArr.length === 0 ? 0 : distributionPercentArr}
-                onChange={poolDistributionChange}
-              />
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  Distribution Date
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="1"
+                  value={distributionArrDate.length === 0 ? 0 : distributionArrDate}
+                  onChange={toTimestampArr}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: '700',
+                    marginRight: '1rem',
+                    alignSelf: 'center',
+                    width: '25%',
+                  }}
+                >
+                  Distribution Percentage
+                </span>
+                <Input
+                  style={{ width: '80%' }}
+                  id="2"
+                  value={distributionPercentArr.length === 0 ? 0 : distributionPercentArr}
+                  onChange={poolDistributionChange}
+                />
+              </div>
             </div>
           )}
-          <Button
-            type="primary"
-            style={{ marginTop: '1rem', marginLeft: '5px' }}
-            onClick={poolDistributionClick}
-          >
+          <Button type="primary" style={{ marginTop: '1rem' }} onClick={poolDistributionClick}>
             Submit
           </Button>
           <h1 style={{ color: 'white', marginTop: '1rem' }}>
             Step 4: Withdraw token & money raised (Vesting)
           </h1>
-          <Input placeholder="Pool ID" value={poolID} />
-          <Button
-            type="primary"
-            style={{ marginTop: '1rem', marginLeft: '5px' }}
-            onClick={vestingClaimClicked}
+          <div
+            style={{
+              display: 'flex',
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}
           >
+            <span style={{ fontWeight: '700', marginRight: '1rem', alignSelf: 'center' }}>
+              Claim Pool ID
+            </span>
+            <Input style={{ width: '75%' }} onChange={e => setClaimPoolID(e.target.value)} />
+          </div>
+          <Button type="primary" style={{ marginTop: '1rem' }} onClick={vestingClaimClicked}>
             Claim
           </Button>
         </div>
