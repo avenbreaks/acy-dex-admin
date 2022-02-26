@@ -7,6 +7,7 @@ import announcementIcon from '@/assets/icon_announcement.svg';
 import OngoingProjects from './components/OngoingProjects.js';
 import IncomingProjects from './components/IncomingProjects.js';
 import EndedProjects from './components/EndedProjects.js';
+import PendingProjects from './components/PendingProjects.js';
 import BubblyButton from './components/BubblyButton.js';
 import RaiseButton from './components/RaiseButton.js';
 import { getProjects } from '@/services/api';
@@ -14,6 +15,7 @@ import ExpandingContent from './components/ExpandedContent';
 import { useConnectWallet } from '@/components/ConnectWallet';
 import { useWeb3React } from '@web3-react/core';
 import { API_URL } from '@/constants'
+import axios from 'axios';
 
 const { Meta } = Card;
 
@@ -21,6 +23,7 @@ const Pool = props => {
   const [ongoingData, setOngoingData] = useState([]);
   const [upcomingData, setUpcomingData] = useState([]);
   const [endedData, setEndedData] = useState([]);
+  const [pendingData, setPendingData] = useState([]);
 
   const history = useHistory();
   const onClickProject = projectID => {
@@ -38,7 +41,18 @@ const Pool = props => {
   }, [account]);
 
   // project variables
-  useEffect(() => {
+  useEffect(async () => {
+    let result = await axios.get(`http://localhost:3001/bsc-test/api/applyForm/getForm`)
+    // console.log("result.data= ", result.data)
+    // console.log("result= ", result)
+    const newPendingData = [];
+    result.data.forEach(obj => {
+      console.log("form=", obj);
+      newPendingData.push(obj)
+    });
+    console.log("pre pending project= ", newPendingData)
+    setPendingData([...newPendingData]);
+    console.log("pending data=", pendingData);
     console.log("api url", API_URL())
     getProjects(API_URL())
       .then(res => {
@@ -55,8 +69,8 @@ const Pool = props => {
             obj.projectStatus === 'Ongoing'
               ? newOngoingData.push(obj)
               : obj.projectStatus === 'Upcoming'
-              ? newUpcomingData.push(obj)
-              : newEndedData.push(obj)
+                ? newUpcomingData.push(obj)
+                : newEndedData.push(obj)
           );
           console.log(API_URL())
           setOngoingData([...newOngoingData]);
@@ -67,6 +81,7 @@ const Pool = props => {
         }
       })
       .catch(e => console.error(e));
+
   }, [account, chainId]);
 
   const mouseMove = e => {
@@ -146,6 +161,15 @@ const Pool = props => {
             </div>
             <div className={styles.projectsContainer}>
               <EndedProjects data={endedData} />
+            </div>
+          </div>
+          <div className={styles.projectBoxes}>
+            <div className={styles.titleBlock}>
+              <span className={styles.anyStatusTitle}>Ended Projects</span>
+              <div className={styles.lineSeperator} />
+            </div>
+            <div className={styles.projectsContainer}>
+              <PendingProjects data={pendingData} />
             </div>
           </div>
         </section>

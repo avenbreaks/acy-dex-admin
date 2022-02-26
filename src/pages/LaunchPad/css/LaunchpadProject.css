@@ -10,15 +10,36 @@
   padding-inline: 1rem;
   margin-top: 2.5px;
   margin-bottom: 2.5px;
-  color: rgba(255, 255, 255, 0.96);
+  color: rgba(255, 255, 255, 1);
   font-family: 'Karla';
 }
 
 .flexContainer {
   display: flex;
+  flex-direction:row;
   margin-top: 2.5rem;
+  text-align: center;
 }
 
+.flexContainer.EditButton{
+  display: flex;
+  /* justify-content: right;
+  float: right; */
+  margin-left: auto;
+  margin-top: 0;
+  background:#EB5C20;
+  border-radius:30px;
+  padding-top: 30px;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-bottom: 30px;
+  height: 30px;
+  flex-basis: 70px;
+  cursor: pointer;
+}
+.flexContainer.EditButton:hover{
+  background-color: rgb(5, 7, 128);
+}
 .gridContainer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -73,7 +94,7 @@
 }
 
 .tokenLogo {
-  display: block;
+  display: inline-block;
   width: 84px;
   height: 84px;
   border-radius: 2rem;
@@ -81,7 +102,6 @@
 }
 
 .tokenInfo {
-  margin-left: 1.25rem;
   overflow-wrap: break-word;
 }
 
@@ -91,11 +111,30 @@
   line-height: 1.2;
   font-family: 'Karla', sans-serif;
   font-weight: 500;
-  margin-left: 0.2rem;
+  margin-left: 1.5rem;
+  cursor: pointer;
+}
+
+.bulletinContainer {
+  display: flex;
+  flex-grow: 1;
+  padding: 20px;
+  justify-content: center;
+}
+
+.bulletinContent {
+  border: 4px solid #eb5c20;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 18px;
+  color: #eb5c20;
+  letter-spacing: 1px;
+  text-align: center;
 }
 
 .tokenLabelBar {
-  row-gap: 0.5rem;
+  display: flex;
+  margin-left: 1.5rem;
 }
 
 .tokenLabel {
@@ -190,7 +229,8 @@
 
 .shortText {
   margin-top: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  color: #aeaeb6;
 }
 
 .progressHeader {
@@ -241,7 +281,7 @@
 .lineSeperator {
   width: 100%;
   margin: 1rem 0;
-  border-bottom: 1px solid #b5b5b6;
+  border-bottom: 1px solid #757579;
   display: block;
 }
 
@@ -254,6 +294,12 @@
 
 .allocation-container-dummy {
   width: 95px;
+}
+
+.bonus-instruction-title {
+  color:rgb(143, 143, 143);
+  cursor: pointer;
+  font-size: 12px;
 }
 
 .allocationCard {
@@ -380,7 +426,11 @@
 
 .allocationCard .openCover {
   transform: rotateY(-110deg);
-  transition-duration: 2s;
+  transition-duration: 1s;
+}
+
+.allocationCard .nocover {
+  display: none;
 }
 
 /* Allocation */
@@ -388,7 +438,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-bottom: 50px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
 }
 
 .allocation-info-container {
@@ -403,7 +454,6 @@
 }
 
 .allocation-cards {
-  width: 100%;
   margin-left: 0.75em;
 }
 
@@ -452,7 +502,7 @@
 .vesting-line {
   width: 100%;
   margin: 10px 0;
-  border-bottom: 1px solid #b5b5b6;
+  border-bottom: 1px solid #757579;
   display: block;
 }
 
@@ -461,6 +511,7 @@
   font-size: 20px;
   text-align: center;
   top: 0;
+  color: #757579;
 }
 
 .arrow-down-inactive {
@@ -477,10 +528,25 @@
   margin-top: 10px;
 }
 
+.vesting-schedule-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.vesting-procedure-container {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  padding-left: 10%;
+}
+
 .vesting-schedule {
-  width: auto;
+  width: 100%;
   background-color: none;
-  padding: 10px;
+  padding-top: 15px;
   opacity: 0;
   display: none;
 }
@@ -489,12 +555,6 @@
   opacity: 1;
   display: block;
   transition: opacity 2s linear;
-}
-
-.vesting-open-container{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .vesting-schedule-open {
@@ -510,6 +570,7 @@
 .sale-vesting-title {
   font-size: 16px;
   width: 100px;
+  text-align: center;
   margin-right: 10px;
 }
 
@@ -525,6 +586,7 @@
   display: block;
   width: 100%;
   margin: 0 2em 0 2.4em;
+  margin-bottom: 14px;
 }
 
 .sales-input-max {
@@ -573,7 +635,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 2rem;
+  margin-right: 2.5rem;
 }
 
 .token-image{
@@ -590,6 +652,8 @@
   width: 20%;
   height: 100%;
   align-items: center;
+  margin-right: 20px;
+  justify-content: end;
 }
 
 
@@ -618,13 +682,21 @@
   color: #eb5c20;
 }
 
+.filter-acy-orange {
+  filter: invert(59%) sepia(95%) saturate(4288%) hue-rotate(348deg) brightness(95%) contrast(94%);
+  width: 15px;
+  height: 15px;
+  margin-left: 0.2rem;
+  cursor: pointer;
+}
+
 .sales-container .sales-submit {
   background-color: #eb5c20;
   color: white;
   border: unset;
   /* border: 1px solid white; */
-  border-radius: 16px;
-  width: 95px;
+  border-radius: 999px;
+  width: 100px;
   height: 35px;
   cursor: pointer;
 }
@@ -635,36 +707,49 @@
 }
 
 .vesting-percentage-container{
-  border-radius: 8px;
+  border-radius: 999px;
   background-color: #363636;
   padding: 7px 15px;
 }
 
 .vesting-percentage {
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .vesting-percentage-claim-container {
   display: flex;
   justify-content: space-between;
+  flex-direction: row;
+  margin-bottom: 36px;
 }
 
-.vesting-percentage-claim-container .claim-btn {
+.claim-btn {
   background-color: #eb5c20;
   border: unset;
   font-size: 12px;
-  border-radius: 8px;
+  border-radius: 999px;
   color: white;
+  height: 35px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .vesting-tick-icon {
   width: 18px;
 }
 
+.vesting-text-container {
+  display: flex;
+  align-items: center;
+}
+
 .vesting-text {
-  text-align: left;
+  text-align: right;
   font-size: 14px;
-  margin: 5px 0 15px 0;
+  margin-left: 15px;
 }
 
 .claimable-text {
@@ -706,17 +791,30 @@
 }
 
 .vesting-trigger-container {
-  position: absolute;
   width: 100%;
-  height: 30px;
   cursor: pointer;
+}
+
+.socialmedia-link-container {
+  display: flex; 
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.social-media-container {
+  /* style={{display:'flex', justifyContent:'center', flexDirection:'column'}}*/
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 50px;
 }
 
 /* Social Medias */
 .social-container {
-  width: 55%;
+  /* width: 40%; */
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
 }
 
@@ -730,6 +828,7 @@
   height: 1.2rem;
   cursor: pointer;
   padding: 0 5px;
+  margin: 5px
 }
 
 .antd-icon-container {
@@ -760,8 +859,26 @@
 
 .title-tooltip-container {
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
+  align-items: baseline;
+  width: 100px;
+}
+
+.bonus-instruction-container {
+  width: 100%;
+}
+
+.bonus-instruction-container ul {
+  margin: 10px;
+}
+
+.bonus-instruction-container li {
+  color: rgb(158, 158, 158);
+  list-style-type: disc;
+  font-size: 12px;
+  /* background-image: url(../../../assets/bullet.png);
+  background-repeat: no-repeat;
+  background-position: left 0.5em; */
 }
 
 .tool-tip-content {
@@ -789,6 +906,7 @@
 
   .flexContainer {
     padding-left: 1em;
+    display: block;
   }
 
   .mainContainer {
@@ -797,12 +915,15 @@
   }
 
   .tokenLogo {
+    display: inline-block;
     width: 42px;
     height: 42px;
   }
 
   .tokenTitle {
     font-size: 1.5rem;
+    cursor: pointer;
+    margin-left: 1rem;
   }
 
   .tokenLabel {
@@ -819,25 +940,28 @@
   }
 
   .sales-input-container {
-    margin: 0;
+    margin: 0 0 0 0;
+    margin-bottom: 14px;
   }
 
   .allocation-title {
     font-size: 20px;
+    margin-right: 0px;
   }
 
   .sale-vesting-title {
-    font-size: 16px;
-    width: auto;
-    margin-right: 16px;
+    font-size: 20px;
+    width: 100px;
+    margin-right: 0px;
+    margin-bottom: 14px;
   }
 
-  .sales-container .sales-submit {
+  /* .sales-container .sales-submit {
     width: 40px;
     font-size: 10px;
     margin-left: 16px;
     border-radius: 10px;
-  }
+  } */
   .allocation-cards {
     margin: 0px;
   }
@@ -878,8 +1002,23 @@
   .allocation-title-container {
     flex-direction: column;
     column-gap: 10px;
-    margin-bottom: 40px;
+    margin-bottom: 0px;
     justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .sales-container {
+    flex-direction: column;
+    column-gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .vesting-container{
+    flex-direction: column;
+    column-gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .projecttitle-socials-container {
@@ -887,8 +1026,7 @@
   }
 
   .icon-container {
-    width: 25px;
-    height: 25px;
+    align-self: center;
   }
 
   .projecttitle {
@@ -906,6 +1044,35 @@
     padding: 2px 10px;
     font-size: 12px;
   }
+
+  .text-line-container {
+    margin: 0px 0px 0px 0px;
+  }
+
+  .vesting-procedure-container {
+    width: auto;
+  }
+
+  .vesting-percentage-claim-container {
+    flex-direction: column;
+  }
+
+  .vesting-percentage-container {
+    width: 70px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .socialmedia-link-container {
+    display: block; 
+    text-align: center;
+  }
+
+  .social-container {
+    width: auto;
+    justify-content: space-evenly;
+    margin-top: 10px;
+  }
 }
 @media (min-width: 427px) and (max-width: 768px) {
   :root {
@@ -922,6 +1089,7 @@
 
   .flexContainer {
     padding-left: 1em;
+    display: block;
   }
 
   .mainContainer {
@@ -931,6 +1099,7 @@
 
   .allocation-title {
     font-size: 20px;
+    margin-right: 0px;
   }
 
   .allocation-cards {
@@ -973,9 +1142,70 @@
   .allocation-title-container {
     flex-direction: column;
     column-gap: 10px;
+    margin-bottom: 0px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .sales-container {
+    flex-direction: column;
+    column-gap: 10px;
     margin-bottom: 40px;
     justify-content: center;
+    flex-wrap: wrap;
   }
+
+  .vesting-container {
+    flex-direction: column;
+    column-gap: 10px;
+    margin-bottom: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .sale-vesting-title {
+    font-size: 20px;
+    width: 100px;
+    margin-right: 0px;
+    margin-bottom: 14px;
+  }
+
+  .text-line-container {
+    margin: 0px 0px 0px 0px;
+  }
+
+  .sales-input-container {
+    margin: 0 0 0 0;
+    margin-bottom: 14px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .vesting-procedure-container {
+    width: auto;
+  }
+
+  .vesting-percentage-claim-container {
+    flex-direction: column;
+  }
+
+  .vesting-percentage-container {
+    width: 70px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .socialmedia-link-container {
+    display: block; 
+    text-align: center;
+  }
+
+  .social-container {
+    width: auto;
+    justify-content: space-evenly;
+    margin-top: 10px;
+  }
+
 }
 /* Tablets */
 @media (min-width: 769px) and (max-width: 1060px) {
@@ -989,6 +1219,7 @@
 
   .flexContainer {
     padding-left: 1em;
+    display: block;
   }
 
   .mainContainer {

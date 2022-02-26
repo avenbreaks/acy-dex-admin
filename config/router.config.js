@@ -27,6 +27,19 @@ export default [
             path: '/launchpad/project/:projectId',
             component: './LaunchPad/LaunchpadProject',
           },
+          {
+            path: '/launchpad/pending/project/:projectId',
+            component: './LaunchPad/LaunchpadPendingProject',
+          },
+          {
+            path: '/launchpad/applyProject',
+            component: './LaunchPad/ApplicationForm',
+          }
+          ,
+          {
+            path: '/launchpad/applyProject/:projectId',
+            component: './LaunchPad/ApplicationForm',
+          }
         ],
       },
       {
