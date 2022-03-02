@@ -165,7 +165,7 @@ const Pool = props => {
           </div>
           <div className={styles.projectBoxes}>
             <div className={styles.titleBlock}>
-              <span className={styles.anyStatusTitle}>Ended Projects</span>
+              <span className={styles.anyStatusTitle}>Pending Projects</span>
               <div className={styles.lineSeperator} />
             </div>
             <div className={styles.projectsContainer}>
