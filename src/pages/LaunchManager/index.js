@@ -28,9 +28,9 @@ import { isWindows } from 'react-device-detect';
 // const BSC_mainnet_PoolContract_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
 
 // testnet
-const poolchart_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
+// const poolchart_address = '0x6e0EC29eA8afaD2348C6795Afb9f82e25F196436';
 // mainnet
-// const poolchart_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
+const poolchart_address = '0x5868c3e82B668ee74D31331EBe9e851684c8bD99';
 
 let ethersProvider;
 let ethersSigner;
