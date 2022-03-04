@@ -18,15 +18,13 @@
   display: flex;
   flex-direction:row;
   margin-top: 2.5rem;
-  text-align: center;
 }
 
 .flexContainer.EditButton{
   display: flex;
-  /* justify-content: right;
-  float: right; */
-  margin-left: auto;
-  margin-top: 0;
+  justify-content: center;
+  margin-left: 10px;
+  margin-top: auto;
   background:#EB5C20;
   border-radius:30px;
   padding-top: 30px;
@@ -34,10 +32,46 @@
   padding-right: 25px;
   padding-bottom: 30px;
   height: 30px;
-  flex-basis: 70px;
+  flex-basis: 120px;
   cursor: pointer;
 }
 .flexContainer.EditButton:hover{
+  background-color: rgb(5, 7, 128);
+}
+.flexContainer.EditButton2{
+  display: flex;
+  justify-content: center;
+  margin-left: auto;
+  margin-top: auto;
+  background:#EB5C20;
+  border-radius:30px;
+  padding-top: 30px;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-bottom: 30px;
+  height: 30px;
+  flex-basis: 120px;
+  cursor: pointer;
+}
+.flexContainer.EditButton2:hover{
+  background-color: rgb(5, 7, 128);
+}
+.flexContainer.ApproveButton{
+  display: flex;
+  justify-content: center;
+  margin-left: auto;
+  margin-top: auto;
+  background:#00cc00;
+  border-radius:30px;
+  padding-top: 30px;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-bottom: 30px;
+  height: 30px;
+  flex-basis: 120px;
+  cursor: pointer;
+}
+.flexContainer.ApproveButton:hover{
   background-color: rgb(5, 7, 128);
 }
 .gridContainer {
@@ -844,6 +878,7 @@
 .projecttitle {
   /* Reset h3 properties */
   margin-bottom: 0;
+  color: white;
 }
 
 .projecttitle-socials-container {
@@ -1032,6 +1067,7 @@
   .projecttitle {
     font-size: 20px;
     margin-bottom: 10px;
+    color :white;
   }
 
   .projectDescription {

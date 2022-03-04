@@ -14,8 +14,9 @@ import { getProjects } from '@/services/api';
 import ExpandingContent from './components/ExpandedContent';
 import { useConnectWallet } from '@/components/ConnectWallet';
 import { useWeb3React } from '@web3-react/core';
-import { API_URL } from '@/constants'
+import { API_URL } from '@/constants';
 import axios from 'axios';
+import moment from 'moment';
 
 const { Meta } = Card;
 
@@ -34,6 +35,7 @@ const Pool = props => {
   // wallet connect
   const { account, chainId, library, activate } = useWeb3React();
   const connectWalletByLocalStorage = useConnectWallet();
+
   useEffect(() => {
     if (!account) {
       connectWalletByLocalStorage();
@@ -57,31 +59,42 @@ const Pool = props => {
     getProjects(API_URL())
       .then(res => {
         if (res) {
-          console.log(res);
-          // const newOngoingData = [...ongoingData];
-          // const newUpcomingData = [...upcomingData];
-          // const newEndedData = [...endedData];
           const newOngoingData = [];
           const newUpcomingData = [];
           const newEndedData = [];
           // get all projects from db
-          res.forEach(obj =>
-            obj.projectStatus === 'Ongoing'
-              ? newOngoingData.push(obj)
-              : obj.projectStatus === 'Upcoming'
-                ? newUpcomingData.push(obj)
-                : newEndedData.push(obj)
-          );
-          console.log(API_URL())
+          res.forEach(obj => {
+            console.log(obj);
+            if (obj.projectStatus === 'Ongoing') newOngoingData.push(obj);
+            else if (obj.projectStatus === 'Upcoming') newUpcomingData.push(obj);
+            else if (obj.projectStatus === 'Ended') newEndedData.push(obj);
+          });
+          console.log(API_URL());
+
+          // "2/22/2022 00:00:00 "
+          // TODO: fault in backend but parse it in frontend for now
+          newOngoingData.sort((a, b) => {
+            return moment.utc(a.saleStart, "M/D/YYYY hh:mm:ss ") > moment.utc(b.saleStart, "M/D/YYYY hh:mm:ss ") ? 1 : -1;
+          });
+
+          newUpcomingData.sort((a, b) => {
+            return moment.utc(a.saleStart, "M/D/YYYY hh:mm:ss ") > moment.utc(b.saleStart, "M/D/YYYY hh:mm:ss ") ? 1 : -1;
+          });
+
+          // show ended project in desencding order
+          newEndedData.sort((a, b) => {
+            return moment.utc(a.saleEnd, "M/D/YYYY hh:mm:ss ") < moment.utc(b.saleEnd, "M/D/YYYY hh:mm:ss ") ? 1 : -1;
+          });
+
           setOngoingData([...newOngoingData]);
           setUpcomingData([...newUpcomingData]);
           setEndedData([...newEndedData]);
+          console.log("Upcoming Data=", upcomingData)
         } else {
           console.log('Failed to retrieve data from database');
         }
       })
       .catch(e => console.error(e));
-
   }, [account, chainId]);
 
   const mouseMove = e => {

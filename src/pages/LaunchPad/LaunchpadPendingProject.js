@@ -107,6 +107,7 @@ const LaunchpadProject = () => {
         const walletID_t = walletID;
         const account_t = account;
         const history = useHistory();
+        //TODO: add Approve Function
         const EditApplyForm = (projectid) => {
             console.log('CLICK Edit!!!!')
             history.push(`/launchpad/applyProject/${projectid}`)
@@ -141,11 +142,14 @@ const LaunchpadProject = () => {
                             })
                         */}
                     </div>
+
+                </div>
+                <div className="flexContainer ApproveButton">
+                    <div style={{ fontSize: 20, color: "white", fontWeight: "bold", alignSelf: "center" }}>Approve</div>
                 </div>
                 <div className="flexContainer EditButton">
                     <div style={{ fontSize: 20, color: "white", fontWeight: "bold", alignSelf: "center" }} onClick={() => EditApplyForm(projectID)}>Edit</div>
                 </div>
-
             </div>
 
         );

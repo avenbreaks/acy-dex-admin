@@ -375,8 +375,12 @@ const ApplicationForm = () => {
     }, [formData]);
 
     // Get form by Id (if projectId = -1, means first time creating form)
+    //TODO: get data from launch.ts
     if (projectId != -1) {
         useEffect(async () => {
+            //TODO: set condition to check pending/not pending 
+            //Not pending: projectID= decimal
+            //Pending: projectID= hex
             let result = await axios.get(`http://localhost:3001/bsc-test/api/applyForm/getFormById?projectId=${projectId}`);
             // console.log("project data data= ", result.data);
             const resultData = result.data[0].form;
@@ -391,50 +395,12 @@ const ApplicationForm = () => {
         setFormData(newFormData);
     }
 
-    // const nextProgress = (num) => {
-
-    //   const value = e.target.value;
-    //   setFormField(name, value);
-
-    //     const value = e.target.value;
-    //     if (name in VALIDATION_FUNCTIONS) {
-    //       if (!VALIDATION_FUNCTIONS[name](value)) {
-    //         setIsError(true);
-    //       } else {
-
-    //         setIsError(false);
-    //       }
-    //     }
-    //   }
-
-    //   const onBlurField = (e) => {
-    //     const value = e.target.value;
-    //     setFormField(name, value);
-
-    //   return (
-    //     <div>
-    //       {isError &&
-    //         <div className="error-info">{ERROR_INFOS[name]}</div>
-    //       }
-
-    //         onChange={onChangeField}
-    //         onBlur={onBlurField}
-
-    //     </div>
-    //   )
-    //}
-
     const submitData = (e) => {
 
         e.preventDefault();
 
         console.log(formData);
-        // TODO: request to backend, register function in src/services/launch.js
-        // look for example at the end of src/services/api.js
 
-        // `${apiUrlPrefix}/applyForm/createForm/walletId=${account}`,obj
-
-        // const apiUrlPrefix = API_URL();
         if (projectId == -1) {
             axios.post(
                 `http://localhost:3001/bsc-test/api/applyForm/createForm?walletId=${account}`, formData

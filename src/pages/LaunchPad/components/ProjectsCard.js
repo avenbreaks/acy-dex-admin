@@ -13,7 +13,6 @@ const ProjectsCard = ({ projectID, start, ddl, raise, sales, rate, title, isOngo
   const history = useHistory();
   const onOpenProjectDetail = (projectid, isPending) => {
     isPending ? history.push(`/launchpad/pending/project/${projectid}`) : history.push(`/launchpad/project/${projectid}`)
-
   };
 
   const stripTitle = (title) => {
