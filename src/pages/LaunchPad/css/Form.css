@@ -176,3 +176,8 @@ textarea.success:focus {
 	text-align: left;
 	font-size: 10px;
 }
+.title-info {
+	color: rgba(13, 13, 161, 0.493);
+	text-align: left;
+	font-size: 10px;
+}
