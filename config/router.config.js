@@ -40,6 +40,11 @@ export default [
             path: '/launchpad/applyProject/:projectId',
             component: './LaunchPad/ApplicationForm',
           }
+          ,
+          {
+            path: '/launchpad/EditProject/:projectId',
+            component: './LaunchPad/ApplicationFormPool',
+          }
         ],
       },
       {
