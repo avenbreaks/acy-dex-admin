@@ -1,5 +1,3 @@
-
-
 /* eslint-disable react/jsx-indent */
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useHistory } from 'react-router-dom';
@@ -79,11 +77,11 @@ const TokenBanner = ({ posterUrl }) => {
   );
 };
 
-const TokenLogoLabel = ({ projectName, tokenLogo, receivedData }) => {
+const TokenLogoLabel = ({ projectName, tokenLogo, receivedData, projectId }) => {
   const history = useHistory();
-  const EditApplyForm = (projectid) => {
+  const EditApplyForm = (projectId) => {
     console.log('CLICK Edit!!!!')
-    history.push(`/launchpad/applyProject/${projectid}`)
+    history.push(`/launchpad/EditProject/${projectId}`)
   };
 
   const clickToWebsite = () => {
@@ -132,7 +130,7 @@ const TokenLogoLabel = ({ projectName, tokenLogo, receivedData }) => {
         </>
       }
       <div className="flexContainer EditButton2">
-        <div style={{ fontSize: 20, color: "white", fontWeight: "bold", alignSelf: "center" }} onClick={() => EditApplyForm(projectID)}>Edit</div>
+        <div style={{ fontSize: 20, color: "white", fontWeight: "bold", alignSelf: "center" }} onClick={() => EditApplyForm(projectId)}>Edit</div>
       </div>
     </div>
   );
@@ -1097,6 +1095,7 @@ const LaunchpadProject = () => {
             projectName={receivedData.projectName}
             tokenLogo={receivedData.tokenLogoUrl}
             receivedData={receivedData}
+            projectId={projectId}
           />
           <CardArea
             poolBaseData={poolBaseData}
